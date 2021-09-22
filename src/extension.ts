@@ -32,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			panel.webview.html = getWebviewContent('test', '');
 
 			var serverType;
-			var serverUrl = 'http://fyp.rkds.xyz';
+			var serverUrl = 'fyp.rkds.xyz';
 
 			// vscode.window.activeTextEditor gets editor's reference and 
 			// document.uri.fsPath returns the path to that file in string format
@@ -59,13 +59,13 @@ export async function activate(context: vscode.ExtensionContext) {
 			else 
 				console.log('server =', serverType);
 
-			const postData = JSON.stringify({
-				'msg': 'Hello World!'
-			});
-				
+			/*
+			// POST request Implementation
+			const postData = JSON.stringify(asciiTxt);
+			var data = '';		// the response data
 			const options = {
-				hostname: 'www.google.com',
-				port: 80,
+				hostname: serverUrl,
+				port: 8000,
 				path: '/upload',
 				method: 'POST',
 				headers: {
@@ -73,13 +73,15 @@ export async function activate(context: vscode.ExtensionContext) {
 					'Content-Length': Buffer.byteLength(postData)
 				}
 			};
-				
+
 			const req = http.request(options, (res) => {
 				console.log(`STATUS: ${res.statusCode}`);
 				console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
 				res.setEncoding('utf8');
 				res.on('data', (chunk) => {
 					console.log(`BODY: ${chunk}`);
+					data += chunk;
+					panel.webview.html = getWebviewContent('response', data);
 				});
 				res.on('end', () => {
 					console.log('No more data in response.');
@@ -93,6 +95,27 @@ export async function activate(context: vscode.ExtensionContext) {
 				// Write data to request body
 			req.write(postData);
 			req.end();
+			*/
+
+			// GET Request - testing to see if I can extract html from the webpage
+			var data = '';		// the response data
+			var options = {
+				host: serverUrl,
+				port: 8000,
+				path: '/'
+			};
+			
+			http.get(options, function(res) {
+				console.log("Got response: " + res.statusCode);
+				
+				res.on("data", function(chunk) {
+					console.log("BODY: " + chunk);
+					data += chunk;
+					panel.webview.html = getWebviewContent('response',  data);
+				});
+			}).on('error', function(e) {
+				console.log("Got error: " + e.message);
+			});		
 		}),
 	);
 	
