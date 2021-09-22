@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import fetch from 'node-fetch';
+import * as http from 'http';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -59,36 +59,40 @@ export async function activate(context: vscode.ExtensionContext) {
 			else 
 				console.log('server =', serverType);
 
-			// var response = await fetch(serverUrl, {
-			// 	method: 'POST',
-			// 	headers: {
-			// 		serverType
-			// 	},
-			// 	body: asciiTxt,
-			// });
-
-			// const options = {
-			// 	hostname: serverUrl,
-			// 	port: 8000,
-			// 	path: '/test',
-			// 	method: 'POST',
-			// 	headers: {
-			// 	  'Content-Type': 'application/json',
-			// 	  'Content-Length': asciiTxt.length
-			// 	}
-			// }
-			
-			// const req = http.request(options, res => {
-			// 	console.log(`statusCode: ${res.statusCode}`);
-			// 	res.on('data', d => {
-			// 		process.stdout.write(d);
-			// 	})
-			// })
-
-			// const response = await fetch('https://github.com/');
-			// const body = await response.text();
-
-			// console.log(body);
+			const postData = JSON.stringify({
+				'msg': 'Hello World!'
+			});
+				
+			const options = {
+				hostname: 'www.google.com',
+				port: 80,
+				path: '/upload',
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Content-Length': Buffer.byteLength(postData)
+				}
+			};
+				
+			const req = http.request(options, (res) => {
+				console.log(`STATUS: ${res.statusCode}`);
+				console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+				res.setEncoding('utf8');
+				res.on('data', (chunk) => {
+					console.log(`BODY: ${chunk}`);
+				});
+				res.on('end', () => {
+					console.log('No more data in response.');
+				});
+			});
+				
+			req.on('error', (e) => {
+				console.error(`problem with request: ${e.message}`);
+			});
+				
+				// Write data to request body
+			req.write(postData);
+			req.end();
 		}),
 	);
 	
