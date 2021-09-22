@@ -17,18 +17,7 @@
 		"commands": [
 			{
 				"command": "viscode.start",
-				"title": "Visualize current code",
-				"category": "VisCode"
-			},
-			{
-				"command": "viscode.next",
-				"title": "Visualize next step",
-				"category": "VisCode"
-			},
-			{
-				"command": "viscode.prev",
-				"title": "Visualize previous step",
-				"category": "VisCode"
+				"title": "Visualize current code"
 			}
 		]
 	},
@@ -52,5 +41,8 @@
 		"mocha": "^8.4.0",
 		"typescript": "^4.3.2",
 		"vscode-test": "^1.5.2"
+	},
+	"dependencies": {
+		"node-fetch": "^3.0.0"
 	}
 }
