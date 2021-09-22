@@ -59,14 +59,14 @@ export async function activate(context: vscode.ExtensionContext) {
 			else 
 				console.log('server =', serverType);
 
-			/*
+			
 			// POST request Implementation
 			const postData = JSON.stringify(asciiTxt);
 			var data = '';		// the response data
 			const options = {
 				hostname: serverUrl,
 				port: 8000,
-				path: '/upload',
+				path: '/',
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -95,8 +95,9 @@ export async function activate(context: vscode.ExtensionContext) {
 				// Write data to request body
 			req.write(postData);
 			req.end();
-			*/
+			
 
+			/*
 			// GET Request - testing to see if I can extract html from the webpage
 			var data = '';		// the response data
 			var options = {
@@ -116,6 +117,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}).on('error', function(e) {
 				console.log("Got error: " + e.message);
 			});		
+			*/
 		}),
 	);
 	
