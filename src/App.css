@@ -1,0 +1,66 @@
+ #activities{
+ background:#FFFF00;
+ border-radius:7px;
+ height:400px;
+ }
+ 
+  #activities ul{
+  
+  padding:0;
+  width:200px;
+  margin-left:10px;
+  margin-top:-4px;
+  display:inline-block;
+  }
+  
+ #activities li{
+ margin-top:5px;
+ background:red;
+ width:200px;
+ text-align:center;
+ cursor:pointer;
+ color:white;
+ padding:3px;
+ }
+ 
+ #activities li:hover{
+ border :2px solid white;
+ } 
+ 
+ #activities p{
+ display:inline-block;
+ width:500px;
+ vertical-align:top;
+ margin-top:20px;
+ margin-left:20px;
+ background:#FFFDA1;
+ }
+ 
+ #suggestion_input{
+ display:none;
+ margin-left:150px;
+ vertical-align:top;
+ margin-top:20px;
+ text-align:center;
+ }
+ 
+#suggestion_input input,textarea{
+ display: block;
+  
+ margin: 15px auto 15px;
+ }
+ 
+ #suggestion_input textarea{
+ max-width:300px;
+ max-height:100px;
+ 
+  
+ 
+ }
+ #suggestion_input label{
+ background:red;
+ color:white; 
+ padding:7px;
+ width:200px;
+ display:inline-block;
+ }
