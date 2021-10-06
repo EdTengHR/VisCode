@@ -3,19 +3,32 @@ import * as http from 'http';
 import { getWebviewContent } from "./ManageWebviewContent";
 
 // POST request Implementation
-export function postData(asciiTxt: string, serverUrl: string, testType: string, panel: vscode.WebviewPanel, 
+export function postData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
         context: vscode.ExtensionContext) {
+    
+    var serverPort;
+    if (serverType == 'python')
+        serverPort = 35001;
+    else if (serverType == 'javascript')
+        serverPort = 35000;
+    else
+        serverPort = 16000;     // used for testing purposes, temporarily does nothing
 
-    const postData = JSON.stringify(asciiTxt);
+    const postData = 'source=' + asciiTxt;
+    console.log(postData);
     var data = '';		// the response data
     const options = {
         hostname: serverUrl,
-        port: 16000,
-        path: '/',
+        port: 80,
+        path: serverType,
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(postData)
+            'Connection': 'keep-alive',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(postData),
+        },
+        body: {
+            'source': postData
         }
     };
 
@@ -44,14 +57,14 @@ export function postData(asciiTxt: string, serverUrl: string, testType: string, 
 
 
 // GET Request - extracting html from the webpage
-export function getData(asciiTxt: string, serverUrl: string, testType: string, panel: vscode.WebviewPanel, 
+export function getData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
     context: vscode.ExtensionContext) {
 
     var data = '';		// the response data
     var options = {
         host: serverUrl,
-        port: 8000,
-        path: '/'
+        port: 16000,
+        path: serverType
     };
 
     http.get(options, function(res) {

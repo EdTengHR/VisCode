@@ -19,9 +19,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('viscode.start', async () => {			
-			var serverType;
+			var serverType;				// '/py' if the code file is python, decides which path to send code to
 			var serverUrl = 'fyp.rkds.xyz';
-			var testType = 'ryder-test';		// set to null / response for default response
+			var testType = 'response';		// set to null / response for default response
 			
 			const panel = vscode.window.createWebviewPanel(
 				'viscode',		// Identifies type of the webview. USed internally
@@ -32,9 +32,6 @@ export async function activate(context: vscode.ExtensionContext) {
 					retainContextWhenHidden: true,
 				}	// Webview options
 			);
-
-			// Set HTML content
-			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, testType, '');
 
 			// vscode.window.activeTextEditor gets editor's reference and 
 			// document.uri.fsPath returns the path to that file in string format
@@ -52,17 +49,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			// identify file type, send to corresponding server
 			serverType = 
-				(currentlyOpenTabfileName.includes('.js')) ? 'javascript' : 
-				(currentlyOpenTabfileName.includes('.py')) ? 'python' : 'unknown';
+				(currentlyOpenTabfileName.includes('.java')) ? '/java' : 
+				(currentlyOpenTabfileName.includes('.py')) ? '/python' : 'unknown';
 
-			// TODO - send the asciiTxt to server by appending it in data in server url
 			if (serverType == 'unknown') 
 				console.log('text type unknown, ask user to choose which server to send to?');
+				// TODO - Error handling here
 			else 
 				console.log('server =', serverType);
 			
-			postData(asciiTxt, serverUrl, testType, panel, context);
-			//getData(asciiTxt, serverUrl, testType, panel, context);
+			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			//getData(asciiTxt, serverUrl, serverType, testType, panel, context);
 		}),
 	);
 	
