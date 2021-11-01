@@ -30,6 +30,24 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 	const nonce = getNonce();
 	
 	switch (selection){
+		case 'response': {
+			return `
+			<!DOCTYPE html>
+			<html>
+				<head>
+					<meta charset="utf-8"/>    
+					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title> VisCode visualization </title>
+				</head>
+				<body>
+					<script nonce="${nonce}">
+						${data}
+					</script>
+				</body>
+			</html>
+			`
+		}
 		case 'ryder-test': {
 			return `
 			<!DOCTYPE html>
@@ -48,7 +66,7 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			<button onclick="hello_there()">Click me</button>
 			</body>
 
-			</html
+			</html>
 			`
 		}
 		case 'react-test': {
@@ -118,9 +136,6 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 				<script nonce="${nonce}" src="${scriptTestUri}"></script>
 			</body>
 			`
-		}
-		case 'response': {
-			return `${data}`;
 		}
 		default: 
 			return `<html></html>`

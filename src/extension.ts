@@ -59,7 +59,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				console.log('server =', serverType);
 			
 			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
-			//getData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			// getData(asciiTxt, serverUrl, serverType, testType, panel, context);
 		}),
 	);
 	
