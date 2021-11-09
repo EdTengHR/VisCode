@@ -7,6 +7,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as d3 from 'd3';
 import { getData, postData } from './utils/NetworkRequests';
 import { getWebviewContent } from "./utils/ManageWebviewContent"
 
@@ -33,33 +34,35 @@ export async function activate(context: vscode.ExtensionContext) {
 				}	// Webview options
 			);
 
-			// vscode.window.activeTextEditor gets editor's reference and 
-			// document.uri.fsPath returns the path to that file in string format
+			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'd3-test', '');
+
+			// // vscode.window.activeTextEditor gets editor's reference and 
+			// // document.uri.fsPath returns the path to that file in string format
 			
-			// TBD - may have to deal with when types are undefined (user's active window is probably 
-			// the welcome screen or sth, if so remove '?' and handle accordingly)
-			var currentlyOpenTabfilePath = vscode.window.activeTextEditor!?.document.uri.fsPath;
-			var currentlyOpenTabfileName = path.basename(vscode.window.activeTextEditor!?.document.fileName);
-			const testTxt = fs.readFileSync(currentlyOpenTabfilePath).toString();
+			// // TBD - may have to deal with when types are undefined (user's active window is probably 
+			// // the welcome screen or sth, if so remove '?' and handle accordingly)
+			// var currentlyOpenTabfilePath = vscode.window.activeTextEditor!?.document.uri.fsPath;
+			// var currentlyOpenTabfileName = path.basename(vscode.window.activeTextEditor!?.document.fileName);
+			// const testTxt = fs.readFileSync(currentlyOpenTabfilePath).toString();
 
-			// string encoding to URL encoding, to be sent to server to do trace pathing 
-			const asciiTxt = encodeURI(testTxt);
-			console.log(asciiTxt);
-			console.log('filename: ', currentlyOpenTabfileName);
+			// // string encoding to URL encoding, to be sent to server to do trace pathing 
+			// const asciiTxt = encodeURI(testTxt);
+			// console.log(asciiTxt);
+			// console.log('filename: ', currentlyOpenTabfileName);
 
-			// identify file type, send to corresponding server
-			serverType = 
-				(currentlyOpenTabfileName.includes('.java')) ? '/java' : 
-				(currentlyOpenTabfileName.includes('.py')) ? '/python' : 'unknown';
+			// // identify file type, send to corresponding server
+			// serverType = 
+			// 	(currentlyOpenTabfileName.includes('.java')) ? '/java' : 
+			// 	(currentlyOpenTabfileName.includes('.py')) ? '/python' : 'unknown';
 
-			if (serverType == 'unknown') 
-				console.log('text type unknown, ask user to choose which server to send to?');
-				// TODO - Error handling here
-			else 
-				console.log('server =', serverType);
+			// if (serverType == 'unknown') 
+			// 	console.log('text type unknown, ask user to choose which server to send to?');
+			// 	// TODO - Error handling here
+			// else 
+			// 	console.log('server =', serverType);
 			
-			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
-			// getData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			// postData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			// // getData(asciiTxt, serverUrl, serverType, testType, panel, context);
 		}),
 	);
 	

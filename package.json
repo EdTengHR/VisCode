@@ -43,6 +43,8 @@
 		"vscode-test": "^1.5.2"
 	},
 	"dependencies": {
+		"@types/d3": "^7.1.0",
+		"d3": "^7.1.0",
 		"node-fetch": "^3.0.0"
 	}
 }

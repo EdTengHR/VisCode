@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as d3 from 'd3';
 
 export function getNonce() {
 	let text = '';
@@ -26,6 +27,13 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 	const scriptReactTestUri = (scriptReactTestPathOnDisk).with({ 'scheme': 'vscode-resource' });
 	const stylesPathReactTestPath = vscode.Uri.joinPath(extensionUri, 'src/css', 'geek-base.css');
 	const stylesReactTestUri = webview.asWebviewUri(stylesPathReactTestPath);
+	
+	const scriptD3TestPathOnDisk = vscode.Uri.joinPath(extensionUri, 'src', 'd3-test.js');
+	const scriptD3TestUri = (scriptD3TestPathOnDisk).with({ 'scheme': 'vscode-resource' });
+
+	const scriptD3Path = vscode.Uri.joinPath(extensionUri, 'node_modules', 'd3', 'src', 'index.js');
+	const scriptD3Uri =  webview.asWebviewUri(scriptD3Path);
+	console.log(scriptD3Path);
 
 	const nonce = getNonce();
 	
@@ -36,7 +44,7 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			<html>
 				<head>
 					<meta charset="utf-8"/>    
-					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
+					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' https:;">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
 					<title> VisCode visualization </title>
 				</head>
@@ -44,6 +52,23 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 					<script nonce="${nonce}">
 						${data}
 					</script>
+				</body>
+			</html>
+			`
+		}
+		case 'd3-test': {
+			return `
+			<!DOCTYPE html>
+			<html>
+				<head>
+					<script nonce ="${nonce}" src="https://d3js.org/d3.v7.min.js"></script>
+					<meta charset="utf-8"/>    
+					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' https:;">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title> VisCode visualization </title>
+				</head>
+				<body>
+					<script nonce="${nonce}" src="${scriptD3TestUri}"></script>
 				</body>
 			</html>
 			`
