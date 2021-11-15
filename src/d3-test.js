@@ -1,4 +1,4 @@
-const svg = d3.select('body').append('svg')
+const svg = d3.select('body').append('svg').attr('width', 500).attr('height', 500)
 
 var lightBlue = '#D5E1EC'
 var darkBlue = '#3467b9'
@@ -13,6 +13,9 @@ canvas.append('rect')
     .attr('width', 15)
     .attr('fill', darkBlue)
     .attr('style', 'solid')
+    .on('click', function(event, d) {
+        
+    })
 
 for (let i = 0; i < 3; i++) {
     canvas.append('circle')
