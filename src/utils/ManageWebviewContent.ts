@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as d3 from 'd3';
+import * as fs from 'fs';
 
 export function getNonce() {
 	let text = '';
@@ -33,7 +34,14 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 
 	const scriptD3Path = vscode.Uri.joinPath(extensionUri, 'node_modules', 'd3', 'src', 'index.js');
 	const scriptD3Uri =  webview.asWebviewUri(scriptD3Path);
-	console.log(scriptD3Path);
+
+	// D3 Force testing
+	// https://bl.ocks.org/steveharoz/8c3e2524079a8c440df60c1ab72b5d03
+	const d3ForcePath = 'D:/HKUST/Year 4/FYP/code/viscode/src/d3force/';
+	const d3Style = fs.readFileSync(d3ForcePath + 'head-style.html');
+	const d3Body = fs.readFileSync(d3ForcePath + 'body.html');
+	const d3CodePath = vscode.Uri.joinPath(extensionUri, 'src', 'd3force', 'code.js');
+	const d3CodeUri = (d3CodePath).with({ 'scheme': 'vscode-resource' });
 
 	const nonce = getNonce();
 	
@@ -56,12 +64,33 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			</html>
 			`
 		}
+		case 'd3-force': {
+			return `
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<meta http-equiv="Content-Security-Policy" content="default-src self; connect-src vscode-webview:; style-src vscode-webview: 'nonce-${nonce}'; img-src https:; script-src 'nonce-${nonce}' https: vscode-resource: 'self';">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<title> VisCode visualization </title>
+				<style nonce="${nonce}">
+					${d3Style}
+				</style>
+			</head>
+			<body>
+				${d3Body}
+				<script nonce="${nonce}" src="https://d3js.org/d3.v7.min.js"></script>
+				<script nonce="${nonce}" src="${d3CodeUri}"></script>
+			</body>
+			</html>
+			`
+		}
 		case 'd3-test': {
 			return `
 			<!DOCTYPE html>
 			<html>
 				<head>
 					<script nonce ="${nonce}" src="https://d3js.org/d3.v7.min.js"></script>
+					<script nonce ="${nonce}" src="https://d3js.org/d3-force.v3.min.js"></script>
 					<meta charset="utf-8"/>    
 					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' https:;">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -113,53 +142,24 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			</html>
 			`
 		}
-		case 'test': {
+		case 'iframe': {
 			return `
-			<!DOCTYPE html><head>
-				<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-				<title></title>
-				<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-				<meta name="robots" content="noindex, nofollow">
-				<meta name="googlebot" content="noindex, nofollow">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}';">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<link href="${stylesTestUri}" rel="stylesheet">
-			</head>
+			<!DOCTYPE html>
+			<html>
 			<body>
-				<div id="activities" class="info_container">
-					<h1>Our Activities</h1>
-					<div class="contain">
-						<ul> 
-							<li>Activity 1</li>
-							<li>Activity 2</li>
-							<li>Activity 3 </li>
-							<li>Activity 4 </li>
-							<li>Activity 5</li>
-							<li>Activity 6 </li>
-							<li>Activity 7</li>
-							<li>Your Suggestions</li>
-						</ul>
-						<p>
-							Bacon ipsum dolor sit amet ribeye tenderloin meatball, chuck andouille beef ribs jerky
-							bresaola beef. Rump flank chicken meatloaf tail sirloin salami cow filet mignon ribeye 
-							jerky swine pork loin turkey. Kielbasa pastrami shankle hamburger cow capicola venison 
-							meatball turkey pancetta tongue doner porchetta. Ground round turducken flank jowl. 
-							Sausage ham hock ham leberkas tri-tip. Brisket short loin cow leberkas kielbasa boudin
-							meatball. Ribeye t-bone sirloin doner.
-						</p>
-						<div id="suggestion_input">
-							<label for="name" >Your Name</label>
-							<input type="text" id="name" name="name">
-							<label for="email">Email</label>
-							<input type="email" id="email" name="email">
-							<label for="suggestions">Suggestions</label>
-							<textarea id="suggestions" name="suggestions" rows="39"></textarea>
-						</div>
-						
-					</div>
-				</div>
-				<script nonce="${nonce}" src="${scriptTestUri}"></script>
+				<form action="http://fyp.rkds.xyz:16002/py" method="post" target="myiframe" id="myform">
+					<textarea name="source" hidden="">print('a')</textarea>
+				</form>
+				<iframe src="about:blank" name="myiframe" width="100%" height="100%" frameBorder="0"></iframe>
+				
+				<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+				<script>
+					$(window).on("load", function(e){
+						document.getElementById("myform").submit();
+					});
+				</script>
 			</body>
+			</html>
 			`
 		}
 		default: 

@@ -34,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				}	// Webview options
 			);
 
-			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'd3-test', '');
+			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'd3-force', '');
 
 			// // vscode.window.activeTextEditor gets editor's reference and 
 			// // document.uri.fsPath returns the path to that file in string format
