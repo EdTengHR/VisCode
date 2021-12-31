@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as http from 'http';
+import * as https from 'https';
 import { getWebviewContent } from "./ManageWebviewContent";
 
 // POST request Implementation
@@ -7,9 +7,9 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
         context: vscode.ExtensionContext) {
     
     var serverPort;
-    if (serverType == 'python')
+    if (serverType == '/python')
         serverPort = 35001;
-    else if (serverType == 'javascript')
+    else if (serverType == '/javascript')
         serverPort = 35000;
     else
         serverPort = 16000;     // used for testing purposes, temporarily does nothing
@@ -19,7 +19,7 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
     var data = '';		// the response data
     const options = {
         hostname: serverUrl,
-        port: 80,
+        port: 443,
         path: serverType,
         method: 'POST',
         headers: {
@@ -32,7 +32,9 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
         }
     };
 
-    const req = http.request(options, (res) => {
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";  // Disable certificate verification
+
+    const req = https.request(options, (res) => {
         console.log(`STATUS: ${res.statusCode}`);
         console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
         res.setEncoding('utf8');
@@ -67,7 +69,7 @@ export function getData(asciiTxt: string, serverUrl: string, serverType: string,
         path: serverType
     };
 
-    http.get(options, function(res) {
+    https.get(options, function(res) {
         console.log("Got response: " + res.statusCode);
         
         res.on("data", function(chunk) {

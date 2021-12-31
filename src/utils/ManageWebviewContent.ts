@@ -57,8 +57,9 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 					<title> VisCode visualization </title>
 				</head>
 				<body>
+					${data}
 					<script nonce="${nonce}">
-						${data}
+
 					</script>
 				</body>
 			</html>
@@ -148,7 +149,7 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			<html>
 			<body>
 				<form action="http://fyp.rkds.xyz:16002/py" method="post" target="myiframe" id="myform">
-					<textarea name="source" hidden="">print('a')</textarea>
+					<textarea name="source" hidden="">print('a')\nprint('hello')\nprint('hi')</textarea>
 				</form>
 				<iframe src="about:blank" name="myiframe" width="100%" height="100%" frameBorder="0"></iframe>
 				
