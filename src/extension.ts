@@ -44,7 +44,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			const testTxt = fs.readFileSync(currentlyOpenTabfilePath).toString();
 
 			// string encoding to URL encoding, to be sent to server to do trace pathing 
-			const asciiTxt = encodeURI(testTxt);
+			const asciiTxt = encodeURIComponent(testTxt);
 			console.log(asciiTxt);
 			console.log('filename: ', currentlyOpenTabfileName);
 
