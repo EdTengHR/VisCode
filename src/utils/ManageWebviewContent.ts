@@ -34,15 +34,7 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 
 	const scriptD3Path = vscode.Uri.joinPath(extensionUri, 'node_modules', 'd3', 'src', 'index.js');
 	const scriptD3Uri =  webview.asWebviewUri(scriptD3Path);
-
-	// D3 Force testing
-	// https://bl.ocks.org/steveharoz/8c3e2524079a8c440df60c1ab72b5d03
-	const d3ForcePath = 'D:/HKUST/Year 4/FYP/code/viscode/src/d3force/';
-	const d3Style = fs.readFileSync(d3ForcePath + 'head-style.html');
-	const d3Body = fs.readFileSync(d3ForcePath + 'body.html');
-	const d3CodePath = vscode.Uri.joinPath(extensionUri, 'src', 'd3force', 'code.js');
-	const d3CodeUri = (d3CodePath).with({ 'scheme': 'vscode-resource' });
-
+	
 	const nonce = getNonce();
 	
 	switch (selection){
@@ -65,44 +57,6 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			</html>
 			`
 		}
-		case 'd3-force': {
-			return `
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<meta http-equiv="Content-Security-Policy" content="default-src self; connect-src vscode-webview:; style-src vscode-webview: 'nonce-${nonce}'; img-src https:; script-src 'nonce-${nonce}' https: vscode-resource: 'self';">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<title> VisCode visualization </title>
-				<style nonce="${nonce}">
-					${d3Style}
-				</style>
-			</head>
-			<body>
-				${d3Body}
-				<script nonce="${nonce}" src="https://d3js.org/d3.v7.min.js"></script>
-				<script nonce="${nonce}" src="${d3CodeUri}"></script>
-			</body>
-			</html>
-			`
-		}
-		case 'd3-test': {
-			return `
-			<!DOCTYPE html>
-			<html>
-				<head>
-					<script nonce ="${nonce}" src="https://d3js.org/d3.v7.min.js"></script>
-					<script nonce ="${nonce}" src="https://d3js.org/d3-force.v3.min.js"></script>
-					<meta charset="utf-8"/>    
-					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' https:;">
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title> VisCode visualization </title>
-				</head>
-				<body>
-					<script nonce="${nonce}" src="${scriptD3TestUri}"></script>
-				</body>
-			</html>
-			`
-		}
 		case 'ryder-test': {
 			return `
 			<!DOCTYPE html>
@@ -121,25 +75,6 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			<button onclick="hello_there()">Click me</button>
 			</body>
 
-			</html>
-			`
-		}
-		case 'react-test': {
-			return `
-			<!DOCTYPE html>
-			<html>
-				<head>
-					<meta charset="utf-8"/>    
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title>Fullstack React - Become a JavaScript Fullstack Web Developer </title>
-					<link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-					<link href="${stylesReactTestUri}" rel="stylesheet">
-				</head>
-			<body> 
-				<h1>Hello.</h1>
-				<div id="app"></div>
-				<script nonce="${nonce}" src="${scriptReactTestUri}"></script>
-			</body>
 			</html>
 			`
 		}
