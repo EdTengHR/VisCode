@@ -6,7 +6,7 @@ import { getWebviewContent } from "./ManageWebviewContent";
 export function postData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
         context: vscode.ExtensionContext) {
     
-    var serverPort;
+    var serverPort, testServer = '/test';
     if (serverType == '/python')
         serverPort = 35001;
     else if (serverType == '/javascript')
@@ -62,15 +62,14 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
 export function getData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
     context: vscode.ExtensionContext) {
 
+    var testServer = '/test'
     var data = '';		// the response data
-    var options = {
-        host: serverUrl,
-        port: 16000,
-        path: serverType
-    };
 
-    https.get(options, function(res) {
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";  // Disable certificate verification
+
+    https.get(serverUrl + testServer, function(res) {
         console.log("Got response: " + res.statusCode);
+        console.log('headers:', res.headers)
         
         res.on("data", function(chunk) {
             console.log("BODY: " + chunk);

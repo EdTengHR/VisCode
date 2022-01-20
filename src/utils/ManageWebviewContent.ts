@@ -40,21 +40,7 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 	switch (selection){
 		case 'response': {
 			return `
-			<!DOCTYPE html>
-			<html>
-				<head>
-					<meta charset="utf-8"/>    
-					<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' https:;">
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<title> VisCode visualization </title>
-				</head>
-				<body>
-					${data}
-					<script nonce="${nonce}">
-
-					</script>
-				</body>
-			</html>
+			${data}
 			`
 		}
 		case 'ryder-test': {

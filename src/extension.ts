@@ -22,6 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('viscode.start', async () => {			
 			var serverType;				// '/py' if the code file is python, decides which path to send code to
 			var serverUrl = 'fyp.rkds.xyz';
+			var getServerUrl = 'https://fyp.rkds.xyz'
 			var testType = 'response';		// set to null / response for default response
 			
 			const panel = vscode.window.createWebviewPanel(
@@ -60,7 +61,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				console.log('server =', serverType);
 			
 			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
-			// getData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
 		}),
 	);
 	
