@@ -11,6 +11,8 @@ import * as d3 from 'd3';
 import { getData, postData } from './utils/NetworkRequests';
 import { getWebviewContent } from "./utils/ManageWebviewContent"
 
+let style: vscode.TextEditorDecorationType;	// The code window decoration style
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
@@ -23,7 +25,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			var serverType;				// '/py' if the code file is python, decides which path to send code to
 			var serverUrl = 'fyp.rkds.xyz';
 			var getServerUrl = 'https://fyp.rkds.xyz'
-			var testType = 'response';		// set to null / response for default response
+			var testType = 'lineHighlightTesting';		// set to null / response for default response
 			
 			const panel = vscode.window.createWebviewPanel(
 				'viscode',		// Identifies type of the webview. USed internally
@@ -40,19 +42,20 @@ export async function activate(context: vscode.ExtensionContext) {
 			
 			// TBD - may have to deal with when types are undefined (user's active window is probably 
 			// the welcome screen or sth, if so remove '?' and handle accordingly)
-			var currentlyOpenTabfilePath = vscode.window.activeTextEditor!?.document.uri.fsPath;
-			var currentlyOpenTabfileName = path.basename(vscode.window.activeTextEditor!?.document.fileName);
-			const testTxt = fs.readFileSync(currentlyOpenTabfilePath).toString();
+			const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
+			const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
+			const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
+			const testTxt = fs.readFileSync(activeEditorFilePath).toString();
 
 			// string encoding to URL encoding, to be sent to server to do trace pathing 
 			const asciiTxt = encodeURIComponent(testTxt);
 			console.log(asciiTxt);
-			console.log('filename: ', currentlyOpenTabfileName);
+			console.log('filename: ', activeEditorFileName);
 
 			// identify file type, send to corresponding server
 			serverType = 
-				(currentlyOpenTabfileName.includes('.java')) ? '/java' : 
-				(currentlyOpenTabfileName.includes('.py')) ? '/python' : 'unknown';
+				(activeEditorFileName.includes('.java')) ? '/java' : 
+				(activeEditorFileName.includes('.py')) ? '/python' : 'unknown';
 
 			if (serverType == 'unknown') 
 				console.log('text type unknown, ask user to choose which server to send to?');
@@ -62,6 +65,34 @@ export async function activate(context: vscode.ExtensionContext) {
 			
 			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
 			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
+			panel.webview.onDidReceiveMessage(
+				message => {
+					switch (message.command) {
+						case 'lineNumberChanged':
+							if (style !== undefined){
+								style.dispose();		// Remove current highlights in editor
+							}
+							style = vscode.window.createTextEditorDecorationType({backgroundColor: "Violet"});
+							vscode.window.showTextDocument(vscode.Uri.file(activeEditorFilePath), 
+									{ preview: false, viewColumn: vscode.ViewColumn.One});
+							if (activeEditor){
+								var lineNumber = message.text;
+								let startLine = activeEditor.document.lineAt(lineNumber);
+								let ranges: vscode.Range[] = [];
+								ranges.push(startLine.range);
+								activeEditor.setDecorations(style, ranges);
+								console.log(lineNumber)
+							}
+							else {
+								console.log("Active editor is undefined, potentially because " + 
+										"calling webview panel changes it to undef")
+							}
+							return;
+					}
+				},
+				undefined,
+				context.subscriptions
+			);
 		}),
 	);
 	
@@ -71,4 +102,9 @@ export async function activate(context: vscode.ExtensionContext) {
 	console.log('Congratulations, your extension "VisCode" is now active!');
 }
 
-export function deactivate() {}
+export function deactivate() {
+	// Remove the text highlighting when the plugin is terminated
+	if (style !== undefined){
+		style.dispose();
+	}
+}

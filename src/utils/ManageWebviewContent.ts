@@ -43,27 +43,6 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			${data}
 			`
 		}
-		case 'ryder-test': {
-			return `
-			<!DOCTYPE html>
-			<html>
-			<head>
-			<title>Request Tester</title>
-			<script>
-			function hello_there(){
-				window.location.replace("http://fyp.rkds.xyz/py");
-			}
-			</script>
-			</head>
-
-			<body>
-			<p>As per your request, I have included a button which runs some javascript code. Enjoy!</p>
-			<button onclick="hello_there()">Click me</button>
-			</body>
-
-			</html>
-			`
-		}
 		case 'iframe': {
 			return `
 			<!DOCTYPE html>
@@ -79,6 +58,56 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 					$(window).on("load", function(e){
 						document.getElementById("myform").submit();
 					});
+				</script>
+			</body>
+			</html>
+			`
+		}
+		case 'lineHighlightTesting': {
+			return `
+			<!DOCTYPE html>
+			<html>
+			<body>
+				<div id="StackTraceButtons" >
+					<button type="button" onclick="prevStackTraceLine()">Prev</button>
+					<button type="button" onclick="nextStackTraceLine()">Next</button>
+				</div>
+				<div id="ui" style="width:90%;height:80%;border:1px solid #000;">
+					<div id="dialog_area"><svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg"></svg></div>
+					<div id="cy"></div>
+				</div>
+				<script>
+					const vscode = acquireVsCodeApi();
+
+					var stepNum = 0
+					var lineList = {
+						"0": {
+							"line": 0,
+						},
+						"1": {
+							"line": 2,
+						},
+						"2": {
+							"line": 5,
+						},
+						"3": {
+							"line": 3,
+						},
+					}
+					function prevStackTraceLine(){
+						stepNum -= 1;
+						vscode.postMessage({
+							command: 'lineNumberChanged',
+							text: lineList[stepNum].line,
+						})
+					}
+					function nextStackTraceLine(){
+						stepNum += 1;
+						vscode.postMessage({
+							command: 'lineNumberChanged',
+							text: lineList[stepNum].line,
+						})
+					}
 				</script>
 			</body>
 			</html>
