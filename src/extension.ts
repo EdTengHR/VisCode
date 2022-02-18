@@ -24,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			var serverType;				// '/py' if the code file is python, decides which path to send code to
 			var serverUrl = 'fyp.rkds.xyz';
 			var getServerUrl = 'https://fyp.rkds.xyz'
-			var testType = 'response';		// set to null / response for default response
+			var testType = 'lineHighlightTesting';		// set to null / response for default response
 			
 			const panel = vscode.window.createWebviewPanel(
 				'viscode',		// Identifies type of the webview. USed internally
@@ -71,7 +71,7 @@ export async function activate(context: vscode.ExtensionContext) {
 							if (style !== undefined){
 								style.dispose();		// Remove current highlights in editor
 							}
-							style = vscode.window.createTextEditorDecorationType({backgroundColor: "Violet"});
+							style = vscode.window.createTextEditorDecorationType({backgroundColor: "#6272a4", color: "White"});
 							vscode.window.showTextDocument(vscode.Uri.file(activeEditorFilePath), 
 									{ preview: false, viewColumn: vscode.ViewColumn.One});
 							if (activeEditor){
