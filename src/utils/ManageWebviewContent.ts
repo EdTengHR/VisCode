@@ -67,7 +67,7 @@ export function getWebviewContent(webview: vscode.Webview, extensionUri: vscode.
 			return `
 			<!DOCTYPE html>
 			<html>
-			<body>
+			<body style="background-color:white"> 
 				<div id="StackTraceButtons" >
 					<button type="button" onclick="prevStackTraceLine()">Prev</button>
 					<button type="button" onclick="nextStackTraceLine()">Next</button>

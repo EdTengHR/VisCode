@@ -1,0 +1,1021 @@
+<!-- THIS FILE IS NOT USED IN THE PIPELINE, JUST FOR REFERENCE PURPOSES ON WHAT AN IDEAL INPUT TO WEBVIEW PANEL
+	LOOKS LIKE
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+#StackTraceButtons {
+  position: absolute;
+  left: 5%;
+  top: 88%;
+}
+
+#ui, #cy,#dialog_area {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  left: 5%;
+  top: 5%;
+}
+.tippy-tooltip.variable-theme {
+  background-color: #BDD7EE;
+  color:black;
+}
+.tippy-tooltip.variable-theme .tippy-arrow {
+  border-left-color: #BDD7EE;
+  border-right-color: #BDD7EE;
+}
+</style>
+<meta charset=utf-8 />
+<meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
+<title>Images</title>
+
+ <!-- libs used by demo -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.0/lodash.min.js"></script>
+    <script src="https://unpkg.com/webcola@3.3.8/WebCola/cola.min.js"></script>
+    <script src="https://unpkg.com/popper.js@1.14.4/dist/umd/popper.js"></script>
+    <script src="https://unpkg.com/tippy.js@2.6.0/dist/tippy.all.js"></script>
+
+    <!-- cy libs -->
+    <script src="https://js.cytoscape.org/js/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-cola@2.2.3/cytoscape-cola.js"></script>
+    <script src="https://unpkg.com/cytoscape-popper@1.0.2/cytoscape-popper.js"></script>
+</head>
+<body style="background-color:white">
+<div id="StackTraceButtons" >
+    <button type="button" onclick="prevStackTraceLine()">Prev</button>
+    <button type="button" onclick="nextStackTraceLine()">Next</button>
+</div>
+<div id="ui" style="width:90%;height:80%;border:1px solid #000;">
+    <div id="dialog_area"><svg height="100%" width="100%" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div id="cy"></div>
+</div>
+<p id="step_number">Current step: x/x</p>
+<!-- Load application code at the end to ensure DOM is loaded -->
+
+<!-- In the actual thing, these tags will be replaced with actual code or an obfuscated form of the code-->
+
+<!--This code will contain functions which facilitate drawing nodes-->
+<script type="text/javascript">
+    class ElementComposer {
+	// Constants
+	static #MAX_WIDTH = 200;
+	static #TitleY    = 5; // The y coordinate of where text should begin
+
+	// Colors
+
+	// Function Colors
+	static #FunctionNameBlock 	= '#FFD966'; // text = black
+	static #FunctionBody		= '#FFF2CC';
+	static #FunctionBodyText	= '#FFC000';
+	static #FunctionStroke		= '#FFC000';
+
+	// Class Colors
+	static #ClassNameBlock 		= '#F4B183'; // text = black
+	static #ClassBody			= '#FBE5D6';
+	static #ClassStroke			= '#ED7D31';
+
+	// Variable Colors
+	static #VariableBody		= '#BDD7EE';
+	static #VariableStroke		= '#4372C4';
+
+	// Heap Node Colors
+	static #HeapBody			= '#F2F2F2';
+	static #HeapDots 			= '#AFABAB';
+	static #HeapStroke			= '#767171';
+
+	// Functions
+
+	//Internal Functions
+
+	/*
+		getTextDimensions(text):
+		Description: 
+		Calculates the Dimensions of a piece of text under the
+		assumptions that the text is bold, 20pt, and Consolas.
+		This function is used to obtain the dimension used in
+		the name block of variables, functions and classes.
+		Parameter:
+			text 		String
+		Return: {"width":<text_width>, "height":<text_height>}
+		Note: 
+		The dimensions of a single consolas 20pt character 
+		inside an SVG element is 11*23.2. Due to overlapping, the
+		height of the text can be regarded as 15 pixels.
+	*/
+	static #getTextDimensions(text){
+		//if(text == "") return {"width":0, "height":0};
+		var width = Math.min(Math.ceil(11 * text.length), this.#MAX_WIDTH) || 0;
+		var height = 15 * Math.ceil(11 * text.length / this.#MAX_WIDTH) || 0;
+		return {"width":width, "height":height};
+	}
+
+	/*
+		generateTextElement(text,paddingLeft,centerY,fontSize,fontWeight,txtColor)
+		Description:
+		Generates an SVG text element to be used in the construction of other,
+		larger SVG objects.
+		Parameters:
+			text 		String
+			x,y 		Starting x and y coordinates of the first character. Note that
+						this point refers to the bottom left of the first character.
+			fontSize 	The font size of the text generated.
+			fontWeight 	The weight of the font (regular, bold, etc.)
+			textColor 	The color of the text.
+		Return: A string that can be placed inside an SVG.
+	*/
+	static #generateTextElement(text, x, y, fontSize, fontWeight, textColor){
+		return '<text x="' + x
+		+ '" y="' + y
+		+ '" font-family="consolas" '
+		+ 'font-size="' +fontSize
+		+ '" dominant-baseline="middle" '
+		+ 'style="fill:' +textColor
+		+ ';font-weight:' + fontWeight + '">' + text + '</text>';
+	}
+
+	/*
+		generateTitleText(text, x, y)
+		Description:
+		Generates a string to be placed into another SVG element. Generates
+		multiple text elements and arranges them in a way so that it may fit
+		inside the designated title box.
+		Parameters:
+			text 		String
+			x,y 		x and y coordinates of the first character of the title
+						Note that I have modified the standard, and made these
+						coordinates point to the top left of the first character
+						which is different than the SVG standard.
+		Return: A string that can be placed inside an SVG.
+		Note: 
+		This function is intended for title or variable and as such makes a few
+		assumptions: Consolas, bold, 20pt. => 11*23.2 for each char. Due to
+		overlapping vertically, the chars can be assumed to be 15 pixels tall.
+	*/
+	static #generateTitleText(text, x, y){
+		text = text.toString();
+
+		var titleText = "";
+		var row = 1;
+
+		var maxchars = Math.floor(this.#MAX_WIDTH / 11);
+		var re = new RegExp(`.{1,${maxchars}}`,"g");
+		var blocks = text.toString().match(re);
+
+		for (const block of blocks){
+			titleText = titleText
+			+ this.#generateTextElement(block, x, y + (15 * row++) - 4, 20, "bold", "black");
+		}
+		return titleText;
+	}
+
+	/*
+		generateText(text, x, y)
+		Description:
+		Generates a string to be placed into another SVG element. Generates
+		multiple text elements and arranges them in a way so that it may fit
+		inside the designated title box.
+		Parameters:
+			text 		String
+			x,y 		x and y coordinates of the first character of the title
+						Note that I have modified the standard, and made these
+						coordinates point to the top left of the first character
+						which is different than the SVG standard.
+		Return: A string that can be placed inside an SVG.
+		Note: 
+		This function is intended for title or variable and as such makes a few
+		assumptions: Consolas, regular, 20pt. => 11*23.2 for each char. Due to
+		overlapping vertically, the chars can be assumed to be 15 pixels tall.
+		This function is used for regular text as opposed to title text which is
+		bold.
+	*/
+	static #generateText(text, x, y){
+		text = text.toString();
+		var titleText = "";
+		var row = 1;
+
+		var maxchars = Math.floor(this.#MAX_WIDTH / 11);
+		var re = new RegExp(`.{1,${maxchars}}`,"g");
+		var blocks = text.toString().match(re);
+
+		for (const block of blocks){
+			titleText = titleText
+			+ this.#generateTextElement(block, x, y + (15 * row++) - 4, 20, "regular", "black");
+		}
+		return titleText;
+	}
+
+	// Image Generating Functions
+
+	/*
+		GenerateClassNode(minWidth, minHeight, className, div1Height)
+		Description:
+		Generates an SVG representing a class node that can be used as an image source.
+		Parameters:
+			minWidth 		The minimum width of the body component.
+							i.e. how wide can this element be at LEAST. (=> can be wider)
+			minHeight 		The minimum height of the body component.
+							i.e. how tall can this element be at LEAST. (=> can be wider)
+			className 		The name of the class.
+			div1Height 		The height of the first division within the body.
+		Return: {"svgString":<SVG image data>, "width":<final_width>, "height":<final_height>}
+		Note:
+		The body and the header heights are calculated seperately. What is returned is the sum
+		of heights of these two components.
+	*/
+	static GenerateClassNode(minWidth, minHeight, className, div1Height){
+		className = className.toString();
+		var textDimension = this.#getTextDimensions(className);
+		var width = textDimension.width;
+		var height = textDimension.height;
+		var divisionY = height + 17 + div1Height
+
+		var finalHeight = height + 17 + minHeight + 2;
+		var finalWidth = Math.max(minWidth, width + 20) + 2;
+
+		var svgString = `
+<svg width="${finalWidth}" height="${finalHeight}" viewbox="0 0 ${finalWidth} ${finalHeight}" 
+	version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<path d="M11 1 h${width} l10 10 v${height + 10} h-${width + 20} v-${height + 10} Z" 
+		style="fill: ${this.#ClassNameBlock}" stroke="${this.#ClassStroke}" stroke-width="1px" />
+	${this.#generateTitleText(className, 10, 5)}
+	<path d="M1 ${height + 14} h${minWidth - 20} l20 20 v${minHeight - 20} h-${minWidth} Z" 
+		style="fill: ${this.#ClassBody}" stroke="${this.#ClassStroke}" stroke-width="1px" />
+	<path d="M1 ${divisionY} h${minWidth}" stroke="${this.#ClassStroke}" stroke-width="1px"/>
+	<g transform="translate(12 ${height + 17 + 12}) scale(0.06)">
+		<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" stroke="#000" fill="none">
+			<path stroke-width="26" d="M209,15a195,195 0 1,0 2,0z"/>
+			<path stroke-width="18" d="m210,15v390m195-195H15M59,90a260,260 0 0,0 302,0 m0,240 a260,260 0 0,0-302,0M195,20a250,250 0 0,0 0,382 m30,0 a250,250 0 0,0 0-382"/>
+		</svg>
+	</g>
+	<g transform="translate(12 ${divisionY + 5}) scale(0.06)">
+		<svg xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" 
+			xmlns="http://www.w3.org/2000/svg" width="512" height="512" version="1.1" id="svg2">
+			<g transform="translate(0,448)">
+				<path style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:12;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" 
+					d="m 16,256 240,-192 96,72 0,-32 48,0 0,72 96,80 -48,0 0,192 -120,0 0,-160 -96,0 0,160 -168,0 0,-192 z" transform="translate(0,-448)"/>
+			</g>
+ 		</svg>
+	</g>
+</svg>`;
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(svgString)),"width":finalWidth,"height":finalHeight};
+	}
+
+	/*
+		GenerateClassInstanceNode(minWidth, minHeight, InstanceName)
+		Description:
+		Generates an SVG representing a class instance that can be used as an image source.
+		Parameters:
+			minWidth 		The minimum width of the body component.
+							i.e. how wide can this element be at LEAST. (=> can be wider)
+			minHeight 		The minimum height of the body component.
+							i.e. how tall can this element be at LEAST. (=> can be wider)
+			InstanceName	The name of the instance.		
+		Return: {"svgString":<SVG image data>, "width":<final_width>, "height":<final_height>}
+		Note:
+		The body and the header heights are calculated seperately. What is returned is the sum
+		of heights of these two components.
+	*/
+	static GenerateClassInstanceNode(minWidth, minHeight, InstanceName){
+		InstanceName = InstanceName.toString();
+		var textDimension = this.#getTextDimensions(InstanceName);
+		var width = textDimension.width;
+		var height = textDimension.height;
+
+		var finalHeight = height + 17 + minHeight + 2;
+		var finalWidth = Math.max(minWidth, width + 20) + 2;
+
+		var svgString = `
+<svg width="${finalWidth}" height="${finalHeight}" viewbox="0 0 ${finalWidth} ${finalHeight}" 
+	version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <path d="M21 1 h${width} l10 10 v${height + 10} h-${width + 20} v-${height + 10} Z" 
+  	style="fill: ${this.#ClassNameBlock}" stroke="${this.#ClassStroke}" stroke-width="1px" />
+  ${this.#generateTitleText(InstanceName, 20, 5)}
+  <rect x="1" y="11" width="10" height="${height + 5}" rx="2" 
+  	style="fill:${this.#ClassStroke}" stroke="${this.#ClassStroke}" stroke-width="1px"/>
+	<circle cx="6" cy="${Math.floor((height + 5) / 2) + 5 }" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor((height + 5) / 2) + 10}" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor((height + 5) / 2) + 15}" r="1.3" style="fill:white"/>
+	<path d="M1 ${height + 14} h${minWidth - 20} l20 20 v${minHeight - 20} h-${minWidth} Z" 
+  		style="fill: ${this.#ClassBody}" stroke="${this.#ClassStroke}" stroke-width="1px" />
+</svg>`;
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(svgString)),"width":finalWidth,"height":finalHeight};
+	}
+
+	/*
+		GenerateClassHeadNode(className)
+		Description:
+		Generates an SVG representing a class head that can be used as an image source.
+		Parameters:
+			className 		The name of the class, the text to be put into the header box.
+		Return: {"svgString":<SVG image data>, "width":<final_width>, "height":<final_height>}
+	*/
+	static GenerateClassHeadNode(className){
+		className = className.toString();
+		var textDimension = this.#getTextDimensions(className);
+		var width = textDimension.width;
+		var height = textDimension.height;
+
+		var finalHeight = height + 10 + 2;
+		var finalWidth = width + 22;
+
+		var svgString = `
+<svg width="${finalWidth}" height="${finalHeight}" viewbox="0 0 ${finalWidth} ${finalHeight}" 
+	version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<path d="M11 1 h${width} l10 10 v${height} h-${width + 20} v-${height} Z" 
+		style="fill: ${this.#ClassNameBlock}" stroke="${this.#ClassStroke}" stroke-width="1px" />
+	${this.#generateTitleText(className, 10, 5)}
+</svg>`;
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(svgString)),"width":finalWidth,"height":finalHeight};
+	}
+
+	/*
+		GenerateFunctionCallNode(minWidth, minHeight, functionName)
+		Description:
+		Generates an SVG representing a function call that can be used as an image source.
+		Parameters:
+			minWidth 		The minimum width of the body component.
+							i.e. how wide can this element be at LEAST. (=> can be wider)
+			minHeight 		The minimum height of the body component.
+							i.e. how tall can this element be at LEAST. (=> can be wider)
+			functionName	The name of the function.		
+		Return: {"svgString":<SVG image data>, "width":<final_width>, "height":<final_height>}
+		Note:
+		The body and the header heights are calculated seperately. What is returned is the sum
+		of heights of these two components.
+	*/
+	static GenerateFunctionCallNode(minWidth, minHeight, functionName){
+		functionName = functionName.toString();
+		var textDimension = this.#getTextDimensions(functionName);
+		var width = textDimension.width;
+		var height = textDimension.height;
+
+		var finalHeight = height + 10 + minHeight + 2;
+		var finalWidth = Math.max(minWidth, width + 10) + 2;
+
+		var svgString = `
+<svg width="${finalWidth}" height="${finalHeight}" viewbox="0 0 ${finalWidth} ${finalHeight}" 
+	version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<rect x="1" y="1" width="10" height="${height + 10}" rx="2" 
+		style="fill:${this.#FunctionStroke}" stroke="${this.#FunctionStroke}" stroke-width="1" />
+	<circle cx="6" cy="${Math.floor((height + 10) / 2) - 5 }" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor((height + 10) / 2) }" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor((height + 10) / 2) + 5}" r="1.3" style="fill:white"/>
+	<rect x="11" y="1" width="${width + 10}" height="${height + 10}" rx="2" 
+		style="fill:${this.#FunctionNameBlock}" stroke="${this.#FunctionStroke}" stroke-width="1" />
+	${this.#generateTitleText(functionName, 15, 5)}
+	<path d="M1 ${height + 10} h${minWidth-20} c20 0, 20 0, 20 20 v${minHeight - 20} h-${minWidth-20} c-20 0, -20 0, -20 -20 Z" 
+		style="fill: ${this.#FunctionBody}" stroke="${this.#FunctionStroke}" stroke-width="1px" />
+</svg>`;
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(svgString)),"width":finalWidth,"height":finalHeight};
+	}
+
+	/*
+		GenerateFunctionHeadNode(FunctionName)
+		Description:
+		Generates an SVG representing a function head that can be used as an image source.
+		Parameters:
+			functionName 		The name of the class, the text to be put into the header box.
+		Return: {"svgString":<SVG image data>, "width":<final_width>, "height":<final_height>}
+	*/
+	static GenerateFunctionHeadNode(functionName){
+		functionName = functionName.toString();
+		var textDimension = this.#getTextDimensions(functionName);
+		var width = textDimension.width;
+		var height = textDimension.height;
+
+		var finalHeight = height + 12;
+		var finalWidth = width + 12;
+
+		var svgString = `
+<svg width="${finalWidth}" height="${finalHeight}" viewbox="0 0 ${finalWidth} ${finalHeight}" 
+	version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<path d="M1 1 h${width-10} c20 0, 20 0, 20 20 v${height - 10} h-${width-10} c-20 0, -20 0, -20 -20 Z" 
+		style="fill: ${this.#FunctionNameBlock}" stroke="${this.#FunctionStroke}" stroke-width="1px" />
+	${this.#generateTitleText(functionName, 5, 5)}
+</svg>`;
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(svgString)),"width":finalWidth,"height":finalHeight};
+	}
+
+	/*
+		GenerateVariableNode(variableName, value="")
+		Description:
+		Generates an SVG representing a variable that can be used as an image source.
+		Parameters:
+			variableName 		The name of the variable, the contents of the leftmost box
+			value 				If this exists, another box will be added to the right and
+								the value of this parameter added.
+	*/
+	static GenerateVariableNode(variableName, value=""){
+		variableName = variableName.toString();
+		if (value == null) value = "";
+		value = value.toString();
+		var nameDimension = this.#getTextDimensions(variableName);
+		var nameWidth = nameDimension.width;
+		var nameHeight = nameDimension.height;
+
+		if( value == 'NaN') value = "";
+		var valueDimension = this.#getTextDimensions(value);
+		var valueWidth = valueDimension.width;
+		var valueHeight = valueDimension.height;
+		var finalHeight = Math.max(nameHeight, valueHeight) + 12;
+		var finalWidth = nameWidth + valueWidth + 10 + 10 + 10 + 2;
+
+		if(value != ""){
+			var valueRectangle = `
+	<rect x="${21+nameWidth}" y="1" width="${valueWidth + 10}" height="${finalHeight-2}" 
+		style="fill:${this.#VariableBody}" stroke="${this.#VariableStroke}" stroke-width="1" />`;
+			var valueText = this.#generateText(value, 26 + nameWidth, 5);
+		} else {
+			var valueRectangle = "";
+			var valueText = "";
+		}
+
+		var svgString = `
+<svg width="${finalWidth}" height="${finalHeight}" viewbox="0 0 ${finalWidth} ${finalHeight}" 
+	version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<rect x="1" y="1" width="10" height="${finalHeight-2}" rx="2" 
+		style="fill:${this.#VariableStroke}" stroke="${this.#VariableStroke}" stroke-width="1" />
+	<circle cx="6" cy="${Math.floor(finalHeight / 2) - 5 }" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor(finalHeight / 2) }" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor(finalHeight / 2) + 5}" r="1.3" style="fill:white"/>
+	<rect x="11" y="1" width="${nameWidth + 10}" height="${finalHeight-2}" 
+		style="fill:${this.#VariableBody}" stroke="${this.#VariableStroke}" stroke-width="1" />
+	${this.#generateTitleText(variableName, 15, 5)}
+	${valueRectangle}
+	${valueText}
+</svg>`;
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(svgString)),"width":finalWidth,"height":finalHeight};
+	}
+
+	/*
+		GenerateHeapNode(variableName, value="")
+		Description:
+		Generates an SVG representing a Heap variable that can be used as an image source.
+		Parameters:
+			variableName 		The name of the variable, the contents of the leftmost box
+			value 				If this exists, another box will be added to the right and
+								the value of this parameter added.
+	*/
+	static GenerateHeapNode(variableName, value=""){
+		variableName = variableName.toString();
+		if (value == null) value = "";
+		value = value.toString();
+		var nameDimension = this.#getTextDimensions(variableName);
+		var nameWidth = nameDimension.width;
+		var nameHeight = nameDimension.height;
+
+		if( value == 'NaN') value = "";
+		var valueDimension = this.#getTextDimensions(value);
+		var valueWidth = valueDimension.width;
+		var valueHeight = valueDimension.height;
+		var finalHeight = Math.max(nameHeight, valueHeight) + 12;
+		var finalWidth = nameWidth + valueWidth + 10 + 10 + 10 + 2;
+
+		if(value != ""){
+			var valueRectangle = `
+	<rect x="${21+nameWidth}" y="1" width="${valueWidth + 10}" height="${finalHeight-2}" 
+		style="fill:${this.#HeapBody}" stroke="${this.#HeapStroke}" stroke-width="1" />`;
+			var valueText = this.#generateText(value, 26 + nameWidth, 5);
+		} else {
+			var valueRectangle = "";
+			var valueText = "";
+		}
+
+		var svgString = `
+<svg width="${finalWidth}" height="${finalHeight}" viewbox="0 0 ${finalWidth} ${finalHeight}" 
+	version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<rect x="1" y="1" width="10" height="${finalHeight-2}" rx="2" 
+		style="fill:${this.#HeapDots}" stroke="${this.#HeapStroke}" stroke-width="1" />
+	<circle cx="6" cy="${Math.floor(finalHeight / 2) - 5 }" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor(finalHeight / 2) }" r="1.3" style="fill:white"/>
+	<circle cx="6" cy="${Math.floor(finalHeight / 2) + 5}" r="1.3" style="fill:white"/>
+	<rect x="11" y="1" width="${nameWidth + 10}" height="${finalHeight-2}" 
+		style="fill:${this.#HeapBody}" stroke="${this.#HeapStroke}" stroke-width="1" />
+	${this.#generateTitleText(variableName, 15, 5)}
+	${valueRectangle}
+	${valueText}
+</svg>`;
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(svgString)),"width":finalWidth,"height":finalHeight};
+	}
+
+	// Natalie's Code Below, will refactor later
+
+	// Utility Functions
+	static #createTriangleIcon(dx,dy,orientation,width,degree,fillColor)
+	{
+		var triangle = '<polygon class="triangle" ';
+		
+		var pt2X = width;
+		var pt3X = width/2;
+		var pt3Y = pt3X * Math.tan(degree*Math.PI/180);
+		var center = {"x":((3*dx+pt2X+pt3X)/3).toFixed(3)*1,"y":((3*dy+pt3Y)/3).toFixed(3)*1};
+		var points = 'points="'+dx+','+dy+' '+(pt2X+dx)+','+dy+' '+(pt3X+dx)+','+(pt3Y+dy)+'" style="fill:'+fillColor+'"/>';
+		
+		if(orientation == "d")
+			return triangle+points;
+		if (orientation == "l")
+			return triangle+'transform="rotate('+90+','+center.x+','+center.y+')" '+points;
+		if (orientation == "r")
+			return triangle+'transform="rotate('+-90+','+center.x+','+center.y+')" '+points;
+	}
+
+	static #getTextDimension(svgDocument,txt,fontFamily,fontSize,fontWeight)
+	{
+		svgDocument = document.getElementsByTagName("svg")[0];
+		var element =  document.createElementNS(svgns, "text");;
+		var textelement = document.createTextNode(txt);
+		element.setAttribute("font-size",fontSize);
+		element.setAttribute("font-family",fontFamily);
+		element.setAttribute("font-weight",fontWeight);
+		element.appendChild(textelement);
+		svgDocument.appendChild(element)
+		var bbox = element.getBBox();
+		svgDocument.removeChild(element);
+		return {"width":bbox.width.toFixed(1)*1,"height":bbox.height.toFixed(1)*1};
+	}
+
+	// Image Generating Functions
+	static createListNode(length)
+	{
+		var bbox = this.#getTextDimension(null,"List["+length+"]","consolas",15,"bold");
+		var downtriangle = this.#createTriangleIcon(7,10,'d',15,60,objectStroke);
+		var txt = this.#generateTextElement("List["+length+"]",29,16,15,"bold","black");
+		var glassIcon = '<path  transform="translate('+(29+bbox.width+10)+',7)" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" d="m9.8,9.8a5.32,5.32 0 1,0-0.9,0.9l5.95,5.95m-3.15-4.1 3.85,3.85-0.91,0.91-4.2-4.2"/>'
+		var rectWidth = 7+15+7+bbox.width+10+20; //dx+triangleWidth+dx+textWidth+dx+glassWidth;
+		var rectHead = '<rect x="0" y="0" width="'+rectWidth+'" height="31" style="fill:'+objectHeadBg+';stroke:'+objectStroke+'; stroke-width:1"/>'
+		
+		return {"svgString":encodeURI("data:image/svg+xml;base64," + btoa(rectHead+downtriangle+txt+glassIcon)),"width":rectWidth,"height":31};
+	}
+	static createListBody(width,values)
+	{
+		var rectHeight = 110;
+		
+		var rectBody = '<rect x="0" y="0" width="'+width+'" height="'+rectHeight+'" style="fill:'+objectBoxBg+';stroke:'+objectStroke+'; stroke-width:1"/>'
+		
+		var headingtxt1 = this.#generateTextElement("index",15,15,10,"normal",objectTxt);
+		var headingtxt2 = this.#generateTextElement("values",width/2-5,15,10,"normal",objectTxt);
+		
+		var indexTxt = '<g transform="translate(25,40)">'
+		for (let i = 0; i < 2; i++) {
+			indexTxt += this.#generateTextElement(i,0,0+25*i,10,"normal",objectStroke);
+		}
+		indexTxt += "</g>\n";
+		
+		var valueTxt = '<g transform="translate('+width/2+',40)">'
+		for (let i = 0; i < 2; i++) {
+			var rectBox = '<rect x="0" y="'+(-14+25*i)+'" width="40" height="25" style="fill:white;stroke:'+objectStroke+'; stroke-width:1"/>'
+			valueTxt += rectBox+ this.#generateTextElement(values[i],10,0+25*i,10,"normal",objectTxt);
+		}
+		valueTxt += "</g>\n";
+		//(dx,dy,orientation,width,degree,fillColor)
+		var prevTriangle = this.#createTriangleIcon(10,11+25+10+40,"l",10,60,objectTxt);
+		var nextTriangle = this.#createTriangleIcon(width-20-10,11+25+10+40,"r",10,60,objectTxt);
+		
+		return rectBody+headingtxt1+headingtxt2+indexTxt+valueTxt+prevTriangle+nextTriangle;
+	}
+	static createWholeList(length,values)
+	{
+		var Head = createListNode(length);
+		var bodyTransform = '<g transform="translate(0,'+Head.height+')">';
+		var Body = createListBody(Head.width,values);
+		return Head.svgString+bodyTransform+Body+"</g>";
+	}
+}
+</script>
+
+<!--This code will facilitate handling things on the cytoscape end-->
+<script type="text/javascript">
+    /*
+	** Event Handler Functions
+	NodeInteractor
+	Description:
+	This functions is the event handler of cytoscape
+	1. show and Hide the Tippy 
+	2. Change List Page 
+	3. Redraw the List Page image
+	
+*/
+function hideTippy(node)
+{
+		if (node.data("tippy"))
+			node.data("tippy").hide();
+}
+function showTippy(node)
+{
+		cy.nodes().forEach(hideTippy);
+		if (!node.data('tippy'))
+		{	
+			var domObject = document.createElement('div')
+			if (node.data("group") == "VARIABLE_NODE")
+			{
+				var head = document.createElement('strong')
+				head.innerHTML = 'Variable: ';
+				domObject.appendChild(head);
+			}
+			var typeValue = document.createElement('span')
+			typeValue.innerHTML = node.data("type");
+			domObject.appendChild(typeValue);
+			
+			var tippyobj = tippy( node.popperRef(), {
+		        html: domObject,
+		        trigger: 'manual',
+				theme: 'variable',
+		        arrow: true,
+		        placement: 'left',
+		        hideOnClick: false,
+		        interactive: true
+	      } ).tooltips[0];
+			node.data('tippy',tippyobj);
+		}
+		
+		node.data('tippy').show();
+		var dir = -1;
+		var translateWidth = document.getElementsByClassName('tippy-tooltip')[0].clientWidth/2 * 1.25;
+		var zoomratio = this.cy.zoom();
+		var xdiff = document.getElementsByClassName('tippy-tooltip')[0].clientWidth/2 * (1-zoomratio) + dir*10*zoomratio;
+		document.getElementsByClassName('tippy-tooltip')[0].style.setProperty("transform",`matrix(${zoomratio},0,0,${zoomratio},${xdiff},0)`);
+	    return ; 
+};
+function changeListPage(node)
+{
+	var parentNode = node.parent();
+	var dir = node.data("dir")
+	var pageNumber = parentNode.data("page");
+	var values = parentNode.data("value");
+	pageNumber += dir;
+	if (pageNumber < 0 || pageNumber*2+1 > values.length)
+		return;
+	drawListPage(parentNode,pageNumber)
+	return;
+}
+function drawListPage(pnode,pageNumber)
+{
+	var bodyNode = pnode.children('.pageBody');
+	var values = pnode.data("value");	
+	var valueList = values.slice(pageNumber*2,pageNumber*2+2);
+	var indexList = []
+	if (pnode.data("type") == "DICT")
+		indexList = pnode.data("key").slice(pageNumber*2,pageNumber*2+2);
+	else{
+		indexList = [pageNumber*2]
+		if (valueList.length == 2)
+			indexList.push(pageNumber*2+1);
+	}
+	bodynodeImage = createListBody(pnode.data("type"),bodyNode.width(),indexList,valueList);
+	bodyNode.style('background-image',encodeURI("data:image/svg+xml;base64," + bodynodeImage.bgImage));
+	pnode.data("page",pageNumber);
+	return;
+}
+
+/*
+	NodeInteractor
+	Description:
+	This class will contain functions which facilitate the interactions
+	with the cytoscape canvas, allowing for cleaner more modular code.
+
+	The scope of functions to be included involve:
+		* Node creation
+		* Node deletion
+		* Canvas "refreshing" (for now, purging and redrawing nodes)
+		* Tippy event handling
+		* Element expansion and collapse
+		...
+	Notes:
+	To use this class, an object needs to be initiated and the cy object
+	passed so that this class can handle everything to do with that object.
+	In some regard, this can be considered an even more tailored API for
+	the cytoscape canvas.
+*/
+class NodeInteractor {
+	#step;		// The current step. The frame being inspected. Starts at 0.
+	#maxFrame; 	// The maximum value step is allowed to be. I.e. 0 <= step <= maxFrame
+
+	#childMap = {};	// Used to handle the order in which sizes are calculated
+	#roots = [];	// Used to know which nodes are "root" nodes when thinking
+					// about the structure of nodes like a tree.
+
+	// Used to map group IDs to functions.
+	#generationMap = {
+		'FUNCTION_BODY_NODE':this.#generate_FUNCTION_BODY_NODE,
+		'FUNCTION_HEADER_NODE':this.#generate_FUNCTION_HEADER_NODE,
+		'VARIABLE_NODE':this.#generate_VARIABLE_NODE,
+		'CLASS_NODE':this.#generate_CLASS_NODE,
+		'HEAP_NODE':this.#generate_HEAP_NODE,
+		'PARAMETER_NODE':this.#generate_PARAMETER_NODE
+	}; 	
+
+	/*
+		constructor(cy)
+		Description:
+		This function accepts the cytoscape object to work on. This
+		is needed so that all future functions know which context
+		they are working in.
+		Parameters:
+			cy 				The cytoscape object
+			nodeJSON 		The nodeJSON object which contains the list of nodes and edges.
+	*/
+	constructor(cy, nodeJSON){
+		this.cy = cy;
+		this.nodeJSON = nodeJSON;
+		this.#step = 0;
+		this.#maxFrame = Object.keys(nodeJSON).length - 1;
+		this.#formatNodes();
+	}
+
+	// Getters
+	get step(){
+		return this.#step;
+	}
+
+	get maxFrame(){
+		return this.#maxFrame;
+	}
+	
+
+	/*
+		positionNodes()
+		Description:
+		Positions the nodes... Maries Description here...
+	*/
+	#positionNodes(){
+		// Marie's code here...
+		console.log("***** Step " + this.#step + " *****");
+
+		const MAIN_START_X = 5, MAIN_START_Y = 50, HEAP_START_X = 100, SPACING_X = 5, SPACING_Y = 10; // constants
+		const HEADER_HEIGHT = 31; // todo - is this needed? change to actual height
+		var mainCurrY = MAIN_START_Y, heapCurrY = 50; // keep track of the latest y position 
+
+		this.#roots.forEach( (root) => {
+			// position root node
+			root.position("x", MAIN_START_X + root.width()/2);
+			root.position("y", mainCurrY + root.height()/2);
+			
+			var rootX = root.position().x, rootY = root.position().y;
+
+			console.log("root node: " + root.data("id"));
+			console.log("root position: " + rootX + ", " + rootY);
+
+			// starting position of child nodes
+			var posInfo = {"x": rootX, "y": rootY}; // todo - might not need to store x?
+			
+			// update current position of root nodes
+			mainCurrY = rootX + root.height() + SPACING_Y;
+			
+			this.#childMap[root.data("id")].forEach( (node) => {
+
+				// position child node
+				node.position("x", posInfo.x + node.width()/2);
+				node.position("y", posInfo.y + node.height()/2);
+				
+				// update current position of child nodes inside root
+				posInfo = {"x": rootX, "y": rootY + node.height() + SPACING_Y};
+
+				console.log("child node: " + node.data("id"));
+				console.log("node position: " + node.position().x + ", " + node.position().y);
+			});
+		});
+	}
+	
+	#showDialog()
+	{
+		console.log('Here!')
+	}
+	#addEvents(){
+		this.cy.on('drag','node',function(evt){
+			cy.nodes().forEach(this.hideTippy);
+			var node = evt.target;
+			if (node.isChild()){
+				//console.log(node);
+			}
+		});
+
+		this.cy.on('tap', 'node', function(evt)
+		{
+		  var node = evt.target;
+		  if (node.data("group") == "VARIABLE_NODE")
+		  {	
+			console.log('Show Tippy');
+			showTippy(node)
+		  }
+		  if (node.hasClass("changePage"))
+			  changeListPage(node);
+		  return;
+		});
+	}
+
+	/*
+		generate_XXX(node)
+		Description:
+		This function alters the node passed to it, changing its size, and appearance.
+		Return: {"width":<node_width>, "height":<node_height>}
+	*/
+	#generate_FUNCTION_HEADER_NODE(node){
+		var nodeImage = ElementComposer.GenerateFunctionHeadNode(node.data("label"));
+		node.style('width', nodeImage.width);
+		node.style('height', nodeImage.height);
+		node.style('background-image', nodeImage.svgString);
+		return {"width":nodeImage.width, "height":nodeImage.height};
+	}
+
+	#generate_FUNCTION_BODY_NODE(node, minWidth, minHeight){
+		var nodeImage = ElementComposer.GenerateFunctionCallNode(minWidth, minHeight, node.data("label"));
+		node.style('width', nodeImage.width);
+		node.style('height', nodeImage.height);
+		// These two are needed for parent nodes.
+		// See: https://js.cytoscape.org/#style/node-body
+		node.style('min-width', nodeImage.width);
+		node.style('min-height', nodeImage.height);
+		node.style('background-image', nodeImage.svgString);
+		return {"width":nodeImage.width, "height":nodeImage.height};
+	}
+
+	#generate_VARIABLE_NODE(node){
+		var nodeImage = ElementComposer.GenerateVariableNode(node.data("label"), node.data("value"));
+		node.style('width', nodeImage.width);
+		node.style('height', nodeImage.height);
+		node.style('background-image', nodeImage.svgString);
+		return {"width":nodeImage.width, "height":nodeImage.height};
+	}
+
+	#generate_CLASS_NODE(node, minWidth, minHeight){
+		var nodeImage = ElementComposer.GenerateClassInstanceNode(minWidth, minHeight, node.data("label"));
+		node.style('width', nodeImage.width);
+		node.style('height', nodeImage.height);
+		// These two are needed for parent nodes.
+		// See: https://js.cytoscape.org/#style/node-body
+		node.style('min-width', nodeImage.width);
+		node.style('min-height', nodeImage.height);
+		node.style('background-image', nodeImage.svgString);
+		return {"width":nodeImage.width, "height":nodeImage.height};
+	}
+
+	#generate_HEAP_NODE(node){
+		var nodeImage = ElementComposer.GenerateHeapNode(node.data("label"), node.data("value"));
+		node.style('width', nodeImage.width);
+		node.style('height', nodeImage.height);
+		node.style('background-image', nodeImage.svgString);
+	}
+
+	#generate_PARAMETER_NODE(node){
+		return this.#generate_VARIABLE_NODE(node);
+	}
+
+	/*
+		drawNodes(roots)
+		Description:
+		This is a recursive function that calls in post-order such that
+		the size of the parent is calculated after all of the sizes of 
+		the children have been calculated.
+		Parameter:
+			roots 		A node object representing the parent node.
+			childMap 	A map, mapping parents to an array of children.
+		Return: {"width":<child_width>, "height":<child_height>}
+	*/
+	#drawNodes(root){
+		// Base case: Will always be a single parameter function.
+		let children = this.#childMap[root.data("id")];
+		if(children.length == 0){
+			return this.#generationMap[root.data("group")](root);
+		}
+
+		var minHeight = 0; // will be the sum of heights of all children + 5px padding on each side
+		var minWidth = 220; // Will be wider than the widest child by 10px
+
+		// Operate on all children first.
+		for(const node of children){
+			let dimensions = this.#drawNodes(node);
+			minHeight += dimensions.height + 10;
+			minWidth = Math.max(minWidth, dimensions.width);
+		}
+
+		// Will always be a multi-parameter function
+		return this.#generationMap[root.data("group")](root, minWidth + 10, minHeight)
+	}
+
+	/*
+		formatNodes()
+		Description:
+		This function will apply the background to the nodes in the current cy object.
+		It will also handle calculation of the size of the nodes before applying the
+		size, as to accomodate functions for example.
+
+		For reference, with the current setup, this function assumes variables will be 
+		stacked vertically.
+	*/
+	#formatNodes(){
+		this.#roots.forEach((root)=>{
+			this.#drawNodes(root);
+		});
+		
+		this.#positionNodes();
+		this.#addEvents();
+	}
+
+	/*
+		drawFrame(frameNumber)
+		Description:
+		This function softly refreshes the cytoscape canvas with the nodes and edges of
+		a specific frame.
+		Parameters:
+			frameNumber 	The frame number (starts at 0)
+		Note:
+		If the frame number is invalid, i.e. is less than 0 or greater than the number of frames,
+		the frame will not be updated.
+	*/
+	drawFrame(frameNumber){
+		if(frameNumber < 0 || frameNumber > this.#maxFrame || frameNumber == this.#step) return -1;
+		//cy.elements().remove();cy.add( this.nodeJSON[frameNumber] );
+		this.cy.json({ elements: this.nodeJSON[frameNumber] });
+		this.#step = frameNumber;
+
+		this.#childMap = {};
+		this.#roots = [];
+		cy.nodes().forEach((node)=>{
+			this.#childMap[node.data("id")] = [];
+		});
+		cy.nodes().forEach((node)=>{
+			if (typeof node.data("parent") !== 'undefined'){
+				this.#childMap[node.data("parent")].push(node)
+			} else {
+				this.#roots.push(node);
+			}
+		});
+		
+		this.#formatNodes();
+		return this.#step;
+	}
+
+	prevFrame(){
+		this.drawFrame(this.#step - 1);
+	}
+
+	nextFrame(){
+		this.drawFrame(this.#step + 1);
+	}
+
+}
+</script>
+
+<script>
+    // cy object initialization needs to go here.
+    const vscode = acquireVsCodeApi();
+    var cy = cytoscape({
+      container: document.getElementById('cy'),
+
+        boxSelectionEnabled: false,
+        autounselectify: true,
+
+        style: cytoscape.stylesheet()
+          .selector('node')
+            .css({
+              'shape': 'rectangle',
+              'background-color':'white'
+            }),
+        elements: {
+            "nodes": [],
+            "edges": []
+        },
+
+      layout: {
+        name: 'breadthfirst',
+        directed: true,
+        padding: 10
+      }
+    });
+
+    cy.center();
+    cy.fit();
+
+    var nodeJSON = {"0":{"line":2,"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}}],"edges":[]},"1":{"line":5,"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}}],"edges":[]},"2":{"line":6,"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"3":{"line":0,"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"4":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"5":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":1,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":1,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"6":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":1,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":1,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":0,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"7":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":1,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":2,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":0,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"8":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":1,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":2,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":1,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"9":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":2,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":3,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":1,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"10":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":2,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":3,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":2,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"11":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":3,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":5,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":2,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"12":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":3,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":5,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":3,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"13":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":5,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":8,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":3,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"14":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":5,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":8,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":3,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"15":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}},{"data":{"id":"fib_f1_FUNC_HEAD","group":"FUNCTION_HEADER_NODE","label":"fib","parent":"$main"}},{"data":{"id":"fib_f1","group":"FUNCTION_BODY_NODE","label":"fib"}},{"data":{"id":"fib_f1_n","group":"VARIABLE_NODE","label":"n","value":4,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_a","group":"VARIABLE_NODE","label":"a","value":5,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1_b","group":"VARIABLE_NODE","label":"b","value":8,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1__","group":"VARIABLE_NODE","label":"_","value":3,"type":"int","parent":"fib_f1"}},{"data":{"id":"fib_f1___return__","group":"VARIABLE_NODE","label":"__return__","value":8,"type":"int","parent":"fib_f1"}}],"edges":[{"data":{"id":"fib_f1_FUNC_HEAD&fib_f1","source":"fib_f1_FUNC_HEAD","target":"fib_f1"}}]},"16":{"nodes":[{"data":{"id":"$main","group":"FUNCTION_BODY_NODE","label":"Main"}}],"edges":[]}}
+
+    var Interactor = new NodeInteractor(cy,nodeJSON);
+
+    function prevStackTraceLine(){
+        Interactor.prevFrame();
+        vscode.postMessage({
+            command: 'lineNumberChanged',
+            text: nodeJSON[Interactor.step].line,
+        })
+        updateText();
+    }
+    function nextStackTraceLine(){
+        Interactor.nextFrame();
+        vscode.postMessage({
+            command: 'lineNumberChanged',
+            text: nodeJSON[Interactor.step].line,
+        })
+        updateText();
+    }
+
+    function updateText(){
+        var indicator = document.getElementById("step_number");
+        indicator.innerHTML = `Current step: ${Interactor.step}/${Interactor.maxFrame}`;
+    }
+
+    updateText();
+</script>
+</body>
+</html>

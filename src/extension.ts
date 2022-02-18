@@ -7,7 +7,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as d3 from 'd3';
 import { getData, postData } from './utils/NetworkRequests';
 import { getWebviewContent } from "./utils/ManageWebviewContent"
 
@@ -25,7 +24,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			var serverType;				// '/py' if the code file is python, decides which path to send code to
 			var serverUrl = 'fyp.rkds.xyz';
 			var getServerUrl = 'https://fyp.rkds.xyz'
-			var testType = 'lineHighlightTesting';		// set to null / response for default response
+			var testType = 'response';		// set to null / response for default response
 			
 			const panel = vscode.window.createWebviewPanel(
 				'viscode',		// Identifies type of the webview. USed internally
