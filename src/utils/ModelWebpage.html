@@ -995,18 +995,18 @@ class NodeInteractor {
 
     function prevStackTraceLine(){
         Interactor.prevFrame();
-        vscode.postMessage({
-            command: 'lineNumberChanged',
-            text: nodeJSON[Interactor.step].line,
-        })
+		vscode.postMessage({
+			command: 'lineNumberChanged',
+			text: nodeJSON[Interactor.step].line - 1,
+		})
         updateText();
     }
     function nextStackTraceLine(){
         Interactor.nextFrame();
-        vscode.postMessage({
-            command: 'lineNumberChanged',
-            text: nodeJSON[Interactor.step].line,
-        })
+		vscode.postMessage({
+			command: 'lineNumberChanged',
+			text: nodeJSON[Interactor.step].line - 1,
+		})
         updateText();
     }
 

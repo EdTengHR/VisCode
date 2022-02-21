@@ -8,7 +8,6 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getData, postData } from './utils/NetworkRequests';
-import { getWebviewContent } from "./utils/ManageWebviewContent"
 
 let style: vscode.TextEditorDecorationType;	// The code window decoration style
 
@@ -24,7 +23,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			var serverType;				// '/py' if the code file is python, decides which path to send code to
 			var serverUrl = 'fyp.rkds.xyz';
 			var getServerUrl = 'https://fyp.rkds.xyz'
-			var testType = 'lineHighlightTesting';		// set to null / response for default response
+			var testType = 'response';		// set to null / response for default response
+			var highlightColor = '#6272a4';
+			var textColor = 'White';
 			
 			const panel = vscode.window.createWebviewPanel(
 				'viscode',		// Identifies type of the webview. USed internally
@@ -64,6 +65,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			
 			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
 			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
+			
 			panel.webview.onDidReceiveMessage(
 				message => {
 					switch (message.command) {
@@ -71,9 +73,13 @@ export async function activate(context: vscode.ExtensionContext) {
 							if (style !== undefined){
 								style.dispose();		// Remove current highlights in editor
 							}
-							style = vscode.window.createTextEditorDecorationType({backgroundColor: "#6272a4", color: "White"});
+							style = vscode.window.createTextEditorDecorationType({
+								backgroundColor: highlightColor, color: textColor
+							});
+
 							vscode.window.showTextDocument(vscode.Uri.file(activeEditorFilePath), 
 									{ preview: false, viewColumn: vscode.ViewColumn.One});
+
 							if (activeEditor){
 								var lineNumber = message.text;
 								let startLine = activeEditor.document.lineAt(lineNumber);
@@ -98,7 +104,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "VisCode" is now active!');
+	console.log('VisCode is now active!');
 }
 
 export function deactivate() {

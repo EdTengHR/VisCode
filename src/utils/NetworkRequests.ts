@@ -6,7 +6,8 @@ import { getWebviewContent } from "./ManageWebviewContent";
 export function postData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
         context: vscode.ExtensionContext) {
     
-    var serverPort, testServer = '/test';
+    var serverPort;
+    var vsCodeExtensionEndpoint = '/extension';
     if (serverType == '/python')
         serverPort = 35001;
     else if (serverType == '/javascript')
@@ -20,7 +21,7 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
     const options = {
         hostname: serverUrl,
         port: 443,
-        path: serverType,
+        path: serverType + vsCodeExtensionEndpoint,
         method: 'POST',
         headers: {
             'Connection': 'keep-alive',
