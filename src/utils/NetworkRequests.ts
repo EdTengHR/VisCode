@@ -8,6 +8,7 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
     
     var serverPort;
     var vsCodeExtensionEndpoint = '/extension';
+    var stackTraceEndpoint = '/stacktrace';
     if (serverType == '/python')
         serverPort = 35001;
     else if (serverType == '/javascript')
@@ -21,7 +22,7 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
     const options = {
         hostname: serverUrl,
         port: 443,
-        path: serverType + vsCodeExtensionEndpoint,
+        path: serverType + stackTraceEndpoint,
         method: 'POST',
         headers: {
             'Connection': 'keep-alive',
