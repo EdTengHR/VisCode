@@ -6,8 +6,8 @@ import { getWebviewContent } from "./ManageWebviewContent";
 export function postData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
         context: vscode.ExtensionContext) {
     
-    var serverPort;
-    var vsCodeExtensionEndpoint = '/extension';
+    let serverPort;
+    let vsCodeExtensionEndpoint = '/extension';
     if (serverType == '/python')
         serverPort = 35001;
     else if (serverType == '/javascript')
@@ -17,7 +17,7 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
 
     const postData = 'source=' + asciiTxt;
     console.log(postData);
-    var data = '';		// the response data
+    let data = '';		// the response data
     const options = {
         hostname: serverUrl,
         port: 443,
@@ -63,8 +63,8 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
 export function getData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
     context: vscode.ExtensionContext) {
 
-    var testServer = '/test'
-    var data = '';		// the response data
+    let testServer = '/test'
+    let data = '';		// the response data
 
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";  // Disable certificate verification
 

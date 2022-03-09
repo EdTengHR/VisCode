@@ -20,12 +20,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('viscode.start', async () => {			
-			var serverType;				// '/py' if the code file is python, decides which path to send code to
-			var serverUrl = 'fyp.rkds.xyz';
-			var getServerUrl = 'https://fyp.rkds.xyz'
-			var testType = 'response';		// set to null / response for default response
-			var highlightColor = '#6272a4';
-			var textColor = 'White';
+			let serverType;				// '/py' if the code file is python, decides which path to send code to
+			let serverUrl = 'fyp.rkds.xyz';
+			let getServerUrl = 'https://fyp.rkds.xyz'
+			let testType = 'response';		// set to null / response for default response
+			let highlightColor = '#6272a4';
+			let textColor = 'White';
 			
 			const panel = vscode.window.createWebviewPanel(
 				'viscode',		// Identifies type of the webview. USed internally
@@ -81,7 +81,7 @@ export async function activate(context: vscode.ExtensionContext) {
 									{ preview: false, viewColumn: vscode.ViewColumn.One});
 
 							if (activeEditor){
-								var lineNumber = message.text;
+								let lineNumber = message.text;
 								let startLine = activeEditor.document.lineAt(lineNumber);
 								let ranges: vscode.Range[] = [];
 								ranges.push(startLine.range);
