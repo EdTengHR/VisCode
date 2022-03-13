@@ -63,7 +63,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			else 
 				console.log('server =', serverType);
 			
-			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			postData(asciiTxt, activeEditorFileName, serverUrl, serverType, testType, panel, context);
 			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
 			
 			panel.webview.onDidReceiveMessage(

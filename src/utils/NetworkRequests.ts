@@ -3,8 +3,8 @@ import * as https from 'https';
 import { getWebviewContent } from "./ManageWebviewContent";
 
 // POST request Implementation
-export function postData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
-        context: vscode.ExtensionContext) {
+export function postData(asciiTxt: string, fileName: string, serverUrl: string, serverType: string,
+    testType: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
     
     let serverPort;
     let vsCodeExtensionEndpoint = '/extension';
@@ -29,6 +29,7 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
             'Content-Length': Buffer.byteLength(postData),
         },
         body: {
+            'filename': fileName,
             'source': postData
         }
     };
@@ -60,8 +61,8 @@ export function postData(asciiTxt: string, serverUrl: string, serverType: string
 
 
 // GET Request - extracting html from the webpage
-export function getData(asciiTxt: string, serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
-    context: vscode.ExtensionContext) {
+export function getData(asciiTxt: string, fileName: string, serverUrl: string, serverType: string, 
+    testType: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
 
     let testServer = '/test'
     let data = '';		// the response data
@@ -78,6 +79,6 @@ export function getData(asciiTxt: string, serverUrl: string, serverType: string,
             panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, testType, data);
         });
     }).on('error', function(e) {
-        console.log("Got error: " + e.message);
+        console.error(`problem with request: ${e.message}`);
     });		
 }
