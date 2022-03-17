@@ -38,10 +38,10 @@ export function postData(asciiTxt: string, fileName: string, serverUrl: string, 
 
     const req = https.request(options, (res) => {
         console.log(`STATUS: ${res.statusCode}`);
-        console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
+        // console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
         res.setEncoding('utf8');
         res.on('data', (chunk) => {
-            console.log(`BODY: ${chunk}`);
+            // console.log(`BODY: ${chunk}`);
             data += chunk;
             panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, testType, data);
         });
@@ -71,10 +71,10 @@ export function getData(asciiTxt: string, fileName: string, serverUrl: string, s
 
     https.get(serverUrl + testServer, function(res) {
         console.log("Got response: " + res.statusCode);
-        console.log('headers:', res.headers)
+        // console.log('headers:', res.headers)
         
         res.on("data", function(chunk) {
-            console.log("BODY: " + chunk);
+            // console.log("BODY: " + chunk);
             data += chunk;
             panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, testType, data);
         });

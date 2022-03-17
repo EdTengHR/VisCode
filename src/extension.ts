@@ -49,7 +49,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			// string encoding to URL encoding, to be sent to server to do trace pathing 
 			const asciiTxt = encodeURIComponent(testTxt);
-			console.log(asciiTxt);
 			console.log('filename: ', activeEditorFileName);
 
 			// identify file type, send to corresponding server
@@ -61,7 +60,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				console.log('text type unknown, ask user to choose which server to send to?');
 				// TODO - Error handling here
 			else 
-				console.log('server =', serverType);
+				console.log('server = ', serverType);
 			
 			postData(asciiTxt, activeEditorFileName, serverUrl, serverType, testType, panel, context);
 			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
@@ -86,7 +85,6 @@ export async function activate(context: vscode.ExtensionContext) {
 								let ranges: vscode.Range[] = [];
 								ranges.push(startLine.range);
 								activeEditor.setDecorations(style, ranges);
-								console.log(lineNumber)
 							}
 							else {
 								console.log("Active editor is undefined, potentially because " + 
