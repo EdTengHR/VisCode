@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getData, postData } from './utils/NetworkRequests';
+import { getWebviewContent } from './utils/ManageWebviewContent';
 
 let style: vscode.TextEditorDecorationType;	// The code window decoration style
 
@@ -62,8 +63,14 @@ export async function activate(context: vscode.ExtensionContext) {
 				// TODO - Error handling here
 			else 
 				console.log('server =', serverType);
+
+			// Loading screen
+			// panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
 			
-			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			// Error screen testing
+			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'error', '');
+
+			// postData(asciiTxt, serverUrl, serverType, testType, panel, context);
 			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
 			
 			panel.webview.onDidReceiveMessage(
