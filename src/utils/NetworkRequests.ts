@@ -51,6 +51,7 @@ export function postData(asciiTxt: string, fileName: string, serverUrl: string, 
     });
         
     req.on('error', (e) => {
+        panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'error', e.message);
         console.error(`problem with request: ${e.message}`);
     });
         
