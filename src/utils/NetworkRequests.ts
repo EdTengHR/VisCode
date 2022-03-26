@@ -4,7 +4,7 @@ import { getWebviewContent } from "./ManageWebviewContent";
 
 // POST request Implementation
 export function postData(asciiTxt: string, fileName: string, serverUrl: string, serverType: string,
-    testType: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    testType: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext){
     
     let serverPort;
     let vsCodeExtensionEndpoint = '/extension';
@@ -18,6 +18,7 @@ export function postData(asciiTxt: string, fileName: string, serverUrl: string, 
     const postData = 'source=' + asciiTxt;
     console.log(postData);
     let data = '';		// the response data
+    let output = '';
     const options = {
         hostname: serverUrl,
         port: 443,
@@ -43,10 +44,11 @@ export function postData(asciiTxt: string, fileName: string, serverUrl: string, 
         res.on('data', (chunk) => {
             // console.log(`BODY: ${chunk}`);
             data += chunk;
-            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, testType, data);
+            output += chunk;
         });
         res.on('end', () => {
             console.log('No more data in response.');
+            panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, testType, data);
         });
     });
         
@@ -55,9 +57,10 @@ export function postData(asciiTxt: string, fileName: string, serverUrl: string, 
         console.error(`problem with request: ${e.message}`);
     });
         
-        // Write data to request body
+    // Write data to request body
     req.write(postData);
     req.end();
+    console.log(data)
 }
 
 
@@ -82,4 +85,6 @@ export function getData(asciiTxt: string, fileName: string, serverUrl: string, s
     }).on('error', function(e) {
         console.error(`problem with request: ${e.message}`);
     });		
+
+    return data;
 }

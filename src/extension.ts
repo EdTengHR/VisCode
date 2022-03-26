@@ -75,6 +75,22 @@ export async function activate(context: vscode.ExtensionContext) {
 			panel.webview.onDidReceiveMessage(
 				message => {
 					switch (message.command) {
+						case 'DownloadVisualization':
+							try {
+								let dirPath = activeEditorFilePath.replace(activeEditorFileName, "")
+								let vis = panel.webview.html
+								fs.writeFile(dirPath + 'visualization.html', vis, (err) => {
+									if (err) {
+										vscode.window.showErrorMessage("Visualization failed to download")
+										throw err;
+									}
+								});
+							}
+							catch (err){
+								throw err;
+							}
+							vscode.window.showInformationMessage("Visualization has been saved as visualization.html")
+							return;
 						case 'lineNumberChanged':
 							if (style !== undefined){
 								style.dispose();		// Remove current highlights in editor
