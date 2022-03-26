@@ -65,12 +65,12 @@ export async function activate(context: vscode.ExtensionContext) {
 				console.log('server =', serverType);
 
 			// Loading screen
-			// panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
+			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
 			
 			// Error screen testing
-			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'error', '');
+			// panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'error', '');
 
-			// postData(asciiTxt, serverUrl, serverType, testType, panel, context);
+			postData(asciiTxt, serverUrl, serverType, testType, panel, context);
 			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
 			
 			panel.webview.onDidReceiveMessage(
