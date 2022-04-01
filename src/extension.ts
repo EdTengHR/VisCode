@@ -57,20 +57,22 @@ export async function activate(context: vscode.ExtensionContext) {
 				(activeEditorFileName.includes('.java')) ? '/java' : 
 				(activeEditorFileName.includes('.py')) ? '/python' : 'unknown';
 
-			if (serverType == 'unknown') 
-				console.log('text type unknown, ask user to choose which server to send to?');
-				// TODO - Error handling here
-			else 
+			if (serverType == 'unknown') {
+				vscode.window.showErrorMessage("VisCode Extension Error: Visualization is only supported for Python and Java");
+				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
+					'error', 'Visualization is only supported for Python and Java');
+			}
+			else {
 				console.log('server =', serverType);
+				// Loading screen
+				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
 
-			// Loading screen
-			panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
-			
-			// Error screen testing
-			// panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'error', '');
+				// Error screen testing
+				// panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'error', '');
 
-			postData(asciiTxt, activeEditorFileName, serverUrl, serverType, testType, panel, context);
-			// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
+				postData(asciiTxt, activeEditorFileName, serverUrl, serverType, testType, panel, context);
+				// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
+			}			
 			
 			panel.webview.onDidReceiveMessage(
 				message => {
@@ -133,4 +135,6 @@ export function deactivate() {
 	if (style !== undefined){
 		style.dispose();
 	}
+
+	return undefined;
 }
