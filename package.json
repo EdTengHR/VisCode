@@ -1,11 +1,28 @@
 {
 	"name": "viscode",
-	"displayName": "viscode",
-	"description": "",
+	"displayName": "VisCode",
+	"description": "An extension for visualizing your code",
+	"publisher": "EdmundTeng",
+	"author": {
+		"name": "Edmund Teng"
+	},
+	"homepage": "https://github.com/EdTengHR/VisCode",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/EdTengHR/VisCode"
+	},
+	"bugs": {
+		"url": "https://github.com/EdTengHR/VisCode/issues"
+	},
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.59.0"
 	},
+	"keywords": [
+		"Visualize",
+		"Code visualizer"
+	],
+	"icon": "images/logo.png",
 	"categories": [
 		"Other"
 	],
