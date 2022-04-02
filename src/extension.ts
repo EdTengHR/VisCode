@@ -30,6 +30,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			let textColor = 'White';
 
 			if (panel){
+				if (style !== undefined){
+					style.dispose();
+				}
 				panel.reveal();
 			}
 			else {
@@ -42,98 +45,98 @@ export async function activate(context: vscode.ExtensionContext) {
 						retainContextWhenHidden: true,
 					}	// Webview options
 				);
-	
-				// vscode.window.activeTextEditor gets editor's reference and 
-				// document.uri.fsPath returns the path to that file in string format
-				
-				// TBD - may have to deal with when types are undefined (user's active window is probably 
-				// the welcome screen or sth, if so remove '?' and handle accordingly)
-				const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
-				const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
-				const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
-				const testTxt = fs.readFileSync(activeEditorFilePath).toString();
-	
-				// string encoding to URL encoding, to be sent to server to do trace pathing 
-				const asciiTxt = encodeURIComponent(testTxt);
-				console.log('filename: ', activeEditorFileName);
-	
-				// identify file type, send to corresponding server
-				serverType = 
-					(activeEditorFileName.includes('.java')) ? '/java' : 
-					(activeEditorFileName.includes('.py')) ? '/python' : 'unknown';
-	
-				if (serverType == 'unknown') {
-					vscode.window.showErrorMessage("VisCode Extension Error: Visualization is only supported for Python and Java");
-					panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
-						'error', 'Visualization is only supported for Python and Java');
-				}
-				else {
-					console.log('server =', serverType);
-					// Loading screen
-					panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
-	
-					postData(asciiTxt, activeEditorFileName, serverUrl, serverType, testType, panel, context);
-					// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
-				}			
-				
-				panel.webview.onDidReceiveMessage(
-					message => {
-						switch (message.command) {
-							case 'DownloadVisualization':
-								try {
-									let dirPath = activeEditorFilePath.replace(activeEditorFileName, "")
-									let vis = panel!.webview.html
-									fs.writeFile(dirPath + 'visualization.html', vis, (err) => {
-										if (err) {
-											vscode.window.showErrorMessage("Visualization failed to download")
-											throw err;
-										}
-									});
-								}
-								catch (err){
-									throw err;
-								}
-								vscode.window.showInformationMessage("Visualization has been saved as visualization.html")
-								return;
-							case 'lineNumberChanged':
-								if (style !== undefined){
-									style.dispose();		// Remove current highlights in editor
-								}
-								style = vscode.window.createTextEditorDecorationType({
-									backgroundColor: highlightColor, color: textColor
-								});
-	
-								vscode.window.showTextDocument(vscode.Uri.file(activeEditorFilePath), 
-										{ preview: false, viewColumn: vscode.ViewColumn.One});
-	
-								if (activeEditor){
-									let lineNumber = message.text;
-									let startLine = activeEditor.document.lineAt(lineNumber);
-									let ranges: vscode.Range[] = [];
-									ranges.push(startLine.range);
-									activeEditor.setDecorations(style, ranges);
-								}
-								else {
-									console.log("Active editor is undefined, potentially because " + 
-											"calling webview panel changes it to undef")
-								}
-								return;
-						}
-					},
-					undefined,
-					context.subscriptions
-				);
-	
-				panel.onDidDispose(
-					() => {
-						// The webview panel has been closed
-						panel = undefined;
-						deactivate();
-					},
-					null,
-					context.subscriptions
-				);
 			}
+	
+			// vscode.window.activeTextEditor gets editor's reference and 
+			// document.uri.fsPath returns the path to that file in string format
+			
+			// TBD - may have to deal with when types are undefined (user's active window is probably 
+			// the welcome screen or sth, if so remove '?' and handle accordingly)
+			const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
+			const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
+			const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
+			const testTxt = fs.readFileSync(activeEditorFilePath).toString();
+
+			// string encoding to URL encoding, to be sent to server to do trace pathing 
+			const asciiTxt = encodeURIComponent(testTxt);
+			console.log('filename: ', activeEditorFileName);
+
+			// identify file type, send to corresponding server
+			serverType = 
+				(activeEditorFileName.includes('.java')) ? '/java' : 
+				(activeEditorFileName.includes('.py')) ? '/python' : 'unknown';
+
+			if (serverType == 'unknown') {
+				vscode.window.showErrorMessage("VisCode Extension Error: Visualization is only supported for Python and Java");
+				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
+					'error', 'Visualization is only supported for Python and Java');
+			}
+			else {
+				console.log('server =', serverType);
+				// Loading screen
+				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
+
+				postData(asciiTxt, activeEditorFileName, serverUrl, serverType, testType, panel, context);
+				// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
+			}			
+			
+			panel.webview.onDidReceiveMessage(
+				message => {
+					switch (message.command) {
+						case 'DownloadVisualization':
+							try {
+								let dirPath = activeEditorFilePath.replace(activeEditorFileName, "")
+								let vis = panel!.webview.html
+								fs.writeFile(dirPath + 'visualization.html', vis, (err) => {
+									if (err) {
+										vscode.window.showErrorMessage("Visualization failed to download")
+										throw err;
+									}
+								});
+							}
+							catch (err){
+								throw err;
+							}
+							vscode.window.showInformationMessage("Visualization has been saved as visualization.html")
+							return;
+						case 'lineNumberChanged':
+							if (style !== undefined){
+								style.dispose();		// Remove current highlights in editor
+							}
+							style = vscode.window.createTextEditorDecorationType({
+								backgroundColor: highlightColor, color: textColor
+							});
+
+							vscode.window.showTextDocument(vscode.Uri.file(activeEditorFilePath), 
+									{ preview: false, viewColumn: vscode.ViewColumn.One});
+
+							if (activeEditor){
+								let lineNumber = message.text;
+								let startLine = activeEditor.document.lineAt(lineNumber);
+								let ranges: vscode.Range[] = [];
+								ranges.push(startLine.range);
+								activeEditor.setDecorations(style, ranges);
+							}
+							else {
+								console.log("Active editor is undefined, potentially because " + 
+										"calling webview panel changes it to undef")
+							}
+							return;
+					}
+				},
+				undefined,
+				context.subscriptions
+			);
+
+			panel.onDidDispose(
+				() => {
+					// The webview panel has been closed
+					panel = undefined;
+					deactivate();
+				},
+				null,
+				context.subscriptions
+				);
 		}),
 	);
 	console.log('VisCode is now active!');
