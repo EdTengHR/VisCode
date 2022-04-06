@@ -63,7 +63,20 @@ export async function activate(context: vscode.ExtensionContext) {
 					// Find the .txt input file, read its contents, send to server
 					const inputFilePath = activeEditorFilePath.replace(activeEditorFileName, inputFileName);
 					console.log("Input file path: " + inputFilePath);
-					userInputs = fs.readFileSync(inputFilePath).toString();
+					let inputData = fs.readFileSync(inputFilePath).toString();
+
+					// If user uses \n to separate inputs
+					if (inputData.includes("\\n")){
+						userInputs = inputData;
+					}
+					// If user decided to use the enter key to separate inputs
+					else {
+						userInputs = encodeURIComponent(inputData).replace("%0D%0A", "\\n");
+						while (userInputs.includes("%0D%0A")){
+							userInputs = userInputs.replace("%0D%0A", "\\n");
+						}
+					}
+					console.log(userInputs);
 				}
 				else {
 					// No input / input was cancelled
