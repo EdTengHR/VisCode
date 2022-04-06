@@ -3,8 +3,9 @@ import * as https from 'https';
 import { getWebviewContent } from "./ManageWebviewContent";
 
 // POST request Implementation
-export function postData(asciiTxt: string, fileName: string, serverUrl: string, serverType: string,
-    testType: string, panel: vscode.WebviewPanel, context: vscode.ExtensionContext){
+export function postData(asciiTxt: string, userInputs: string, fileName: string, serverUrl: string,
+    serverType: string, testType: string, panel: vscode.WebviewPanel, 
+    context: vscode.ExtensionContext){
     
     let serverPort;
     let vsCodeExtensionEndpoint = '/extension';
@@ -31,7 +32,8 @@ export function postData(asciiTxt: string, fileName: string, serverUrl: string, 
         },
         body: {
             'filename': fileName,
-            'source': postData
+            'source': postData,
+            'stdin': userInputs
         }
     };
 

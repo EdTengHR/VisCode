@@ -28,7 +28,49 @@ export async function activate(context: vscode.ExtensionContext) {
 			let testType = 'response';		// set to null / response for default response
 			let highlightColor = '#6272a4';
 			let textColor = 'White';
+			let inputFileName = null;
+			let userInputs = '';
+	
+			// vscode.window.activeTextEditor gets editor's reference and 
+			// document.uri.fsPath returns the path to that file in string format
+			
+			// TBD - may have to deal with when types are undefined (user's active window is probably 
+			// the welcome screen or sth, if so remove '?' and handle accordingly)
+			const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
+			const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
+			const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
+			const testTxt = fs.readFileSync(activeEditorFilePath).toString();
 
+			if (testTxt.includes("input")){
+				inputFileName = await vscode.window.showInputBox({
+					title: 'We have detected that your program uses user inputs.',
+					prompt: 'Please enter the inputs, separated by newline, as a separate .txt file in the same directory as your program',
+					placeHolder: 'Enter the filename containing the inputs you wish to provide to your program (including .txt)',
+					validateInput: text=> {
+						if (!text.includes('.txt')){
+							return 'input filename must be a txt file and include .txt';
+						}
+						else {
+							return null;
+						}
+					}
+				});
+	
+				if (inputFileName !== undefined){
+					console.log(inputFileName);
+					vscode.window.showInformationMessage(`Inputs will be selected from file: ${inputFileName}`);
+					
+					// Find the .txt input file, read its contents, send to server
+					const inputFilePath = activeEditorFilePath.replace(activeEditorFileName, inputFileName);
+					console.log("Input file path: " + inputFilePath);
+					userInputs = fs.readFileSync(inputFilePath).toString();
+				}
+				else {
+					// No input / input was cancelled
+					vscode.window.showInformationMessage(`No inputs will be sent to your program`);
+				}
+			}
+			
 			if (panel){
 				if (style !== undefined){
 					style.dispose();
@@ -46,16 +88,6 @@ export async function activate(context: vscode.ExtensionContext) {
 					}	// Webview options
 				);
 			}
-	
-			// vscode.window.activeTextEditor gets editor's reference and 
-			// document.uri.fsPath returns the path to that file in string format
-			
-			// TBD - may have to deal with when types are undefined (user's active window is probably 
-			// the welcome screen or sth, if so remove '?' and handle accordingly)
-			const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
-			const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
-			const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
-			const testTxt = fs.readFileSync(activeEditorFilePath).toString();
 
 			// string encoding to URL encoding, to be sent to server to do trace pathing 
 			const asciiTxt = encodeURIComponent(testTxt);
@@ -65,7 +97,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			serverType = 
 				(activeEditorFileName.includes('.java')) ? '/java' : 
 				(activeEditorFileName.includes('.py')) ? '/python' : 'unknown';
-
+			
+			
 			if (serverType == 'unknown') {
 				vscode.window.showErrorMessage("VisCode Extension Error: Visualization is only supported for Python and Java");
 				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
@@ -76,7 +109,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				// Loading screen
 				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
 
-				postData(asciiTxt, activeEditorFileName, serverUrl, serverType, testType, panel, context);
+				postData(asciiTxt, userInputs, activeEditorFileName, serverUrl, serverType, testType, panel, context);
 				// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
 			}			
 			
