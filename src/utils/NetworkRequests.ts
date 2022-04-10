@@ -8,6 +8,7 @@ export function postData(asciiTxt: string, userInputs: string, fileName: string,
     context: vscode.ExtensionContext){
     
     let serverPort;
+    let stackTraceEndpoint = '/stacktrace'
     let vsCodeExtensionEndpoint = '/extension';
     if (serverType == '/python')
         serverPort = 35001;
