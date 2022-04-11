@@ -39,9 +39,14 @@ export async function activate(context: vscode.ExtensionContext) {
 			const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
 			const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
 			const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
-			const testTxt = fs.readFileSync(activeEditorFilePath).toString();
+			const inputTxt = fs.readFileSync(activeEditorFilePath).toString();
 
-			if (testTxt.includes("input")){
+			// Remove all commented code from input file
+			let processedTxt = encodeURIComponent(inputTxt).replace(/%23(.*?)%0A/gm, "");
+			
+			console.log("Test Text: "+ processedTxt)
+
+			if (processedTxt.includes("input")){
 				inputFileName = await vscode.window.showInputBox({
 					title: 'We have detected that your program uses user inputs.',
 					prompt: 'Please enter the inputs, separated by newline, as a separate .txt file in the same directory as your program',
@@ -57,17 +62,16 @@ export async function activate(context: vscode.ExtensionContext) {
 				});
 	
 				if (inputFileName !== undefined){
-					console.log(inputFileName);
-					vscode.window.showInformationMessage(`Inputs will be selected from file: ${inputFileName}`);
-					
+					console.log(inputFileName);					
 					// Find the .txt input file, read its contents, send to server
 					const inputFilePath = activeEditorFilePath.replace(activeEditorFileName, inputFileName);
+					vscode.window.showInformationMessage(`Inputs will be selected from file: ${inputFilePath}`);
 					console.log("Input file path: " + inputFilePath);
 					let inputData = fs.readFileSync(inputFilePath).toString();
 
 					// If user uses \n to separate inputs
 					if (inputData.includes("\\n")){
-						userInputs = inputData;
+						userInputs = encodeURIComponent(inputData);
 					}
 					// If user decided to use the enter key to separate inputs
 					else {
@@ -75,8 +79,9 @@ export async function activate(context: vscode.ExtensionContext) {
 						while (userInputs.includes("%0D%0A")){
 							userInputs = userInputs.replace("%0D%0A", "\\n");
 						}
+						userInputs = encodeURIComponent(userInputs);
 					}
-					console.log(userInputs);
+					console.log("user input is: " + userInputs);
 				}
 				else {
 					// No input / input was cancelled
@@ -103,7 +108,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 
 			// string encoding to URL encoding, to be sent to server to do trace pathing 
-			const asciiTxt = encodeURIComponent(testTxt);
+			const encodedTxt = processedTxt;
 			console.log('filename: ', activeEditorFileName);
 
 			// identify file type, send to corresponding server
@@ -122,7 +127,7 @@ export async function activate(context: vscode.ExtensionContext) {
 				// Loading screen
 				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 'loading', '');
 
-				postData(asciiTxt, userInputs, activeEditorFileName, serverUrl, serverType, testType, panel, context);
+				postData(encodedTxt, userInputs, activeEditorFileName, serverUrl, serverType, testType, panel, context);
 				// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
 			}	
 			

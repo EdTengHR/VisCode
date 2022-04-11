@@ -3,26 +3,24 @@ import * as https from 'https';
 import { getWebviewContent } from "./ManageWebviewContent";
 
 // POST request Implementation
-export function postData(asciiTxt: string, userInputs: string, fileName: string, serverUrl: string,
+export function postData(encodedTxt: string, userInputs: string, fileName: string, serverUrl: string,
     serverType: string, testType: string, panel: vscode.WebviewPanel, 
     context: vscode.ExtensionContext){
     
-    let serverPort;
     let stackTraceEndpoint = '/stacktrace'
+    let nodeJsonEndpoint = '/nodejson';
     let vsCodeExtensionEndpoint = '/extension';
-    if (serverType == '/python')
-        serverPort = 35001;
-    else if (serverType == '/javascript')
-        serverPort = 35000;
-    else
-        serverPort = 16000;     // used for testing purposes, temporarily does nothing
 
-    const postData = 'source=' + asciiTxt;
+    let fileNameEncoded = encodeURIComponent(fileName)
+    const postData = 'source=' + encodedTxt + '&' + 
+                        'stdin=' + userInputs + '&' + 
+                        'filename=' + fileNameEncoded;
+    
     console.log(postData);
     let data = '';		// the response data
     let output = '';
     const options = {
-        hostname: serverUrl,
+        host: serverUrl,
         port: 443,
         path: serverType + vsCodeExtensionEndpoint,
         method: 'POST',
@@ -31,12 +29,10 @@ export function postData(asciiTxt: string, userInputs: string, fileName: string,
             'Content-Type': 'application/x-www-form-urlencoded',
             'Content-Length': Buffer.byteLength(postData),
         },
-        body: {
-            'filename': fileName,
-            'source': postData,
-            'stdin': userInputs
-        }
+        body: postData
     };
+
+    console.log(JSON.stringify(options))
 
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";  // Disable certificate verification
 

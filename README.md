@@ -11,9 +11,11 @@ Works for Python and Java.
 ## Usage
 
 Instructions for running the extension:
-* Open the python / java file which you want to visualize
+* Open the Python / Java file which you want to visualize
+* Ensure the file has been saved
 * Open the command palette (`Cmd+Shift+P` on macOS or `Ctrl+Shift+P` on Windows)
 * Select the command "Visualize current code"
+* To rerun the visualizer, navigate back to the Python / Java code file, save it and run the command again
 
 If your program takes in user inputs
 * Add the inputs you wish to enter in a separate .txt file in the same directory as your program
