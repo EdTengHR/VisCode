@@ -124,7 +124,15 @@ export async function activate(context: vscode.ExtensionContext) {
 
 				postData(asciiTxt, userInputs, activeEditorFileName, serverUrl, serverType, testType, panel, context);
 				// getData(asciiTxt, getServerUrl, serverType, testType, panel, context);
-			}			
+			}	
+			
+			// Remove all line highlights when the text document was changed
+			vscode.workspace.onDidChangeTextDocument(function (e){
+				console.log('Text document was changed')
+				if (style !== undefined){
+					style.dispose();
+				}
+			})
 			
 			panel.webview.onDidReceiveMessage(
 				message => {
