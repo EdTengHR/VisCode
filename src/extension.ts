@@ -122,6 +122,13 @@ export async function activate(context: vscode.ExtensionContext) {
 				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
 					'error', 'Visualization is only supported for Python and Java');
 			}
+			else if (inputFileName === undefined){
+				vscode.window.showErrorMessage("Error: Your program requires an input file");
+				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
+					'error', 'Inputs are required to run your program, ' + 
+					'please enter your inputs in a separate .txt file, and type in the file name ' + 
+					'in the input box that is launched when the visualize command is called');
+			}
 			else {
 				console.log('server =', serverType);
 				// Loading screen
