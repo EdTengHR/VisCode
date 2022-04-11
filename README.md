@@ -23,6 +23,13 @@ Works for Python and Java.
 * Save the .txt file
 * Upon running the visualizer command, enter the name of the input file, including the .txt extension
 
+### Visualization Features
+* Press the 'Prev' and 'Next' buttons to navigate between execution steps
+* The corresponding line of code that was executed to create the visualization will be highlighted in the code editor 
+* Console outputs are displayed in the text box in the bottom right corner
+* Class diagrams are drawn in the 'Class Diagram' tab in the top right, while the main visualization resides in the 'Trace Diagram' tab in the top left
+* To download the visualization as an HTML document, press the 'Download' button
+
 Note: Only single files are supported, a project consisting of multiple files cannot be visualized.
 
 ## Release Notes
