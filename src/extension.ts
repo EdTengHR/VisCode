@@ -42,8 +42,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			const inputTxt = fs.readFileSync(activeEditorFilePath).toString();
 
 			// Remove all commented code from input file
-			let processedTxt = encodeURIComponent(inputTxt).replace(/%23(.*?)%0A/gm, "");
-			
+			// let processedTxt = encodeURIComponent(inputTxt).replace(/%23(.*?)%0A/gm, "");
+			let processedTxt = encodeURIComponent(inputTxt);
+
 			console.log("Test Text: "+ processedTxt)
 
 			if (processedTxt.includes("input")){
