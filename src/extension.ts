@@ -34,8 +34,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			// vscode.window.activeTextEditor gets editor's reference and 
 			// document.uri.fsPath returns the path to that file in string format
 			
-			// TBD - may have to deal with when types are undefined (user's active window is probably 
-			// the welcome screen or sth, if so remove '?' and handle accordingly)
+			// To deal with when types are undefined (e.g. user's active window is  
+			// the welcome screen, remove '?' and handle accordingly)
 			const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
 			const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
 			const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
