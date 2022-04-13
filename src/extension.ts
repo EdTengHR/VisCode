@@ -42,12 +42,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			const inputCode = fs.readFileSync(activeEditorFilePath).toString();
 
 			// Remove all commented code from input file
-			// let processedTxt = encodeURIComponent(inputTxt).replace(/%23(.*?)%0A/gm, "");
-			let processedTxt = encodeURIComponent(inputCode);
+			let processedCode = encodeURIComponent(inputCode).replace(/%23(.*?)%0A/gm, "");
+			let urlEncodedCode = encodeURIComponent(inputCode);
 
-			console.log("Test Text: "+ processedTxt)
-
-			if (processedTxt.includes("input")){
+			if (processedCode.includes("input")){
 				inputList = await vscode.window.showInputBox({
 					title: 'We have detected that your program uses user inputs.',
 					prompt: 'Please enter the inputs, separated by a newline "\\n", in the input box',
@@ -80,7 +78,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 
 			// string encoding to URL encoding, to be sent to server to do trace pathing 
-			const encodedTxt = processedTxt;
+			const encodedTxt = urlEncodedCode;
 			console.log('filename: ', activeEditorFileName);
 
 			// identify file type, send to corresponding server
