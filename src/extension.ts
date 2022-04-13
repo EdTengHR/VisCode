@@ -28,7 +28,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			let testType = 'response';		// set to null / response for default response
 			let highlightColor = '#6272a4';
 			let textColor = 'White';
-			let inputFileName = null;
+			let inputList = null;
 			let userInputs = '';
 	
 			// vscode.window.activeTextEditor gets editor's reference and 
@@ -39,54 +39,25 @@ export async function activate(context: vscode.ExtensionContext) {
 			const activeEditor = vscode.window.activeTextEditor		// get current editor's reference
 			const activeEditorFilePath = activeEditor!?.document.uri.fsPath;
 			const activeEditorFileName = path.basename(activeEditor!?.document.fileName);
-			const inputTxt = fs.readFileSync(activeEditorFilePath).toString();
+			const inputCode = fs.readFileSync(activeEditorFilePath).toString();
 
 			// Remove all commented code from input file
 			// let processedTxt = encodeURIComponent(inputTxt).replace(/%23(.*?)%0A/gm, "");
-			let processedTxt = encodeURIComponent(inputTxt);
+			let processedTxt = encodeURIComponent(inputCode);
 
 			console.log("Test Text: "+ processedTxt)
 
 			if (processedTxt.includes("input")){
-				inputFileName = await vscode.window.showInputBox({
+				inputList = await vscode.window.showInputBox({
 					title: 'We have detected that your program uses user inputs.',
-					prompt: 'Please enter the inputs, separated by newline, as a separate .txt file in the same directory as your program',
-					placeHolder: 'Enter the filename containing the inputs you wish to provide to your program (including .txt)',
-					validateInput: text=> {
-						if (!text.includes('.txt')){
-							return 'input filename must be a txt file and include .txt';
-						}
-						else {
-							return null;
-						}
-					}
+					prompt: 'Please enter the inputs, separated by a newline "\\n", in the input box',
+					placeHolder: 'Enter your inputs here',
 				});
 	
-				if (inputFileName !== undefined){
-					console.log(inputFileName);					
-					// Find the .txt input file, read its contents, send to server
-					const inputFilePath = activeEditorFilePath.replace(activeEditorFileName, inputFileName);
-					vscode.window.showInformationMessage(`Inputs will be selected from file: ${inputFilePath}`);
-					console.log("Input file path: " + inputFilePath);
-					let inputData = fs.readFileSync(inputFilePath).toString();
-
-					// If user uses \n to separate inputs
-					if (inputData.includes("\\n")){
-						userInputs = encodeURIComponent(inputData);
-					}
-					// If user decided to use the enter key to separate inputs
-					else {
-						userInputs = encodeURIComponent(inputData).replace("%0D%0A", "\\n");
-						while (userInputs.includes("%0D%0A")){
-							userInputs = userInputs.replace("%0D%0A", "\\n");
-						}
-						userInputs = encodeURIComponent(userInputs);
-					}
-					console.log("user input is: " + userInputs);
-				}
-				else {
-					// No input / input was cancelled
-					vscode.window.showInformationMessage(`No inputs will be sent to your program`);
+				if (inputList !== undefined){
+					console.log(inputList);					
+					vscode.window.showInformationMessage(`Inputs submitted to the server: ${inputList}`);
+					userInputs = encodeURIComponent(inputList);
 				}
 			}
 			
@@ -123,7 +94,8 @@ export async function activate(context: vscode.ExtensionContext) {
 				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
 					'error', 'Visualization is only supported for Python and Java');
 			}
-			else if (inputFileName === undefined){
+			// No inputs / input was cancelled
+			else if (inputList === undefined){
 				vscode.window.showErrorMessage("Error: Your program requires an input file");
 				panel.webview.html = getWebviewContent(panel.webview, context.extensionUri, 
 					'error', 'Inputs are required to run your program, ' + 
