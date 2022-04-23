@@ -45,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			let processedCode = encodeURIComponent(inputCode).replace(/%23(.*?)%0A/gm, "");
 			let urlEncodedCode = encodeURIComponent(inputCode);
 
-			if (processedCode.includes("input")){
+			if (processedCode.includes("input") || processedCode.includes("System.in")){
 				inputList = await vscode.window.showInputBox({
 					title: 'We have detected that your program uses user inputs.',
 					prompt: 'Please enter the inputs, separated by a newline "\\n", in the input box',
