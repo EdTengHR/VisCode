@@ -149,10 +149,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
 							if (activeEditor){
 								let lineNumber = message.text;
-								let startLine = activeEditor.document.lineAt(lineNumber);
-								let ranges: vscode.Range[] = [];
-								ranges.push(startLine.range);
-								activeEditor.setDecorations(style, ranges);
+								if (lineNumber >= 0){
+									let startLine = activeEditor.document.lineAt(lineNumber);
+									let ranges: vscode.Range[] = [];
+									ranges.push(startLine.range);
+									activeEditor.setDecorations(style, ranges);
+								}
 							}
 							else {
 								console.log("Active editor is undefined, potentially because " + 
