@@ -42,6 +42,6 @@ Initial release of VisCode for User Acceptance Testing
 
 Added user input handling
 
-### 0.0.3
+### 0.0.3 to 0.0.7
 
 Minor bug fixes
