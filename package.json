@@ -14,7 +14,7 @@
 	"bugs": {
 		"url": "https://github.com/EdTengHR/VisCode/issues"
 	},
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"engines": {
 		"vscode": "^1.59.0"
 	},
