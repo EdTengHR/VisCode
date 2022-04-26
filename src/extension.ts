@@ -48,14 +48,15 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (processedCode.includes("input") || processedCode.includes("System.in")){
 				inputList = await vscode.window.showInputBox({
 					title: 'We have detected that your program uses user inputs.',
-					prompt: 'Please enter the inputs, separated by a newline "\\n", in the input box',
+					prompt: 'Please enter the inputs, separated by "\\\\n", in the input box',
 					placeHolder: 'Enter your inputs here',
 				});
 	
 				if (inputList !== undefined){
-					console.log(inputList);					
+					let encodedInput = encodeURIComponent(inputList);
+					userInputs = encodedInput.replace(/\%5C\%5Cn/g, "%0a");
+					console.log(userInputs);					
 					vscode.window.showInformationMessage(`Inputs submitted to the server: ${inputList}`);
-					userInputs = encodeURIComponent(inputList);
 				}
 			}
 			

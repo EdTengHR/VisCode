@@ -3,26 +3,28 @@ import * as https from 'https';
 import { getWebviewContent } from "./ManageWebviewContent";
 
 // POST request Implementation
-export function postData(encodedTxt: string, userInputs: string, fileName: string, serverUrl: string,
-    serverType: string, testType: string, panel: vscode.WebviewPanel, 
+export function postData(encodedTxt: string, encodedInput:string, fileName: string, 
+    serverUrl: string, serverType: string, testType: string, panel: vscode.WebviewPanel, 
     context: vscode.ExtensionContext){
     
-    let stackTraceEndpoint = '/stacktrace'
+    let stackTraceEndpoint = '/stacktrace';
     let nodeJsonEndpoint = '/nodejson';
-    let vsCodeExtensionEndpoint = '/extension';
+    let extensionEndpoint = '/extension';
 
     let fileNameEncoded = encodeURIComponent(fileName)
     const postData = 'source=' + encodedTxt + '&' + 
-                        'stdin=' + userInputs + '&' + 
+                        'stdin=' + encodedInput + '&' +
                         'filename=' + fileNameEncoded;
     
+    let serverPath =serverType + extensionEndpoint;
+
     console.log(postData);
     let data = '';		// the response data
     let output = '';
     const options = {
         host: serverUrl,
         port: 443,
-        path: serverType + vsCodeExtensionEndpoint,
+        path: serverPath,
         method: 'POST',
         headers: {
             'Connection': 'keep-alive',
