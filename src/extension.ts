@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getData, postData } from './utils/NetworkRequests';
+import { download, DownloadVisualization, getData, postData } from './utils/NetworkRequests';
 import { getWebviewContent } from './utils/ManageWebviewContent';
 
 let style: vscode.TextEditorDecorationType;	// The code window decoration style
@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('viscode.start', async () => {			
-			let serverType;				// '/py' if the code file is python, decides which path to send code to
+			let serverType = '';				// '/py' if the code file is python, decides which path to send code to
 			let serverUrl = 'fyp.rkds.xyz';
 			let getServerUrl = 'https://fyp.rkds.xyz'
 			let testType = 'response';		// set to null / response for default response
@@ -124,13 +124,20 @@ export async function activate(context: vscode.ExtensionContext) {
 						case 'DownloadVisualization':
 							try {
 								let dirPath = activeEditorFilePath.replace(activeEditorFileName, "")
-								let vis = panel!.webview.html
-								fs.writeFile(dirPath + 'visualization.html', vis, (err) => {
-									if (err) {
-										vscode.window.showErrorMessage("Visualization failed to download")
-										throw err;
+								let vis = download(encodedTxt, userInputs, activeEditorFileName, serverUrl, serverType);
+								vis.then((data) => {
+									if (typeof data === "string"){
+										fs.writeFile(dirPath + 'visualization.html', data, (err) => {
+											if (err) {
+												vscode.window.showErrorMessage("Visualization failed to download")
+												throw err;
+											}
+										});
 									}
-								});
+									else {
+										vscode.window.showErrorMessage("Visualization failed to download")
+									}
+								}).catch((err) => console.log(err));
 							}
 							catch (err){
 								throw err;
